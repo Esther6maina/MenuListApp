@@ -1,0 +1,428 @@
+:root {
+  --primary-color: #1a73e8;
+  --secondary-color: #34c759;
+  --accent-color: #fbbc05;
+  --text-color: #333333;
+  --bg-color: #f5f7fa;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* App Header (Amazon-like, Gradient with Title, Toggle, Search, and Time) */
+.app-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 10px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 20;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Toggle Button - Amazon-like Positioning */
+.toggle-btn {
+  position: static;
+  background: var(--primary-color);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.toggle-btn:hover {
+  background: var(--secondary-color);
+  color: white;
+}
+
+/* App Title - Amazon-like Placement */
+.app-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+}
+
+/* Search Placeholder (Future Functionality) */
+.search-placeholder {
+  flex: 1;
+  margin-left: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+  color: var(--text-color);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.search-input:disabled {
+  background: #f5f7fa;
+}
+
+/* Current Time Display */
+.current-time {
+  font-size: 0.9rem;
+  color: white;
+  margin-left: 20px;
+  white-space: nowrap;
+}
+
+/* Dashboard Layout - Adjusted for Header */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  padding-top: 50px;
+  
+}
+
+/* Sidebar (Modern, Blue, Sleek) */
+.sidebar {
+  width: 200px;
+  background: linear-gradient(135deg, #1a73e8, #2a8df8);
+  color: white;
+  padding: 20px;
+  position: fixed;
+  height: calc(100vh - 50px);
+  top: 50px;
+  left: 0;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  transform: translateX(0);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Sidebar Closed State */
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+/* Day Buttons (Modern, Rounded) */
+.day-btn {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 5px 0;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.day-btn:hover, .day-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Main Content (Full Width Initially, Shifts Right) */
+.main-content {
+  flex: 1;
+  margin-left: 0;
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+  overflow-y: auto;
+  max-height: calc(100vh - 50px - 40px);
+}
+
+.main-content.with-sidebar {
+  margin-left: 200px;
+}
+
+/* Grid Layout */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  transition: opacity 0.3s ease;
+}
+
+.grid-container.fade {
+  opacity: 0;
+}
+
+.meal-section, .activity-section, .notes-section {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.meal-section:hover, .activity-section:hover, .notes-section:hover {
+  transform: translateY(-2px);
+}
+
+.meal-section h3, .activity-section h3, .notes-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 15px;
+}
+
+/* Input Group */
+.input-group {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.meal-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px 0 0 6px;
+  transition: var(--transition);
+}
+
+.meal-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.add-meal, .add-activity {
+  padding: 10px;
+  background: var(--secondary-color);
+  border: none;
+  border-radius: 0 6px 6px 0;
+  color: white;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.add-meal:hover, .add-activity:hover {
+  background: #2cae4e;
+}
+
+/* Lists - Remove Dots and Format Timestamp */
+.meal-list {
+  
+  list-style: none !important; 
+  /* Explanation: Added !important to override any browser defaults or inherited styles causing bullets */
+  padding-left: 0 !important; /* CHANGE: Ensures no default padding/indentation */
+  /* Explanation: Prevents any leftover padding that might simulate bullets, with !important for specificity */
+  margin: 0 !important; /* CHANGE: Removes any default margin */
+  /* Explanation: Ensures a clean, flat list without extra spacing */
+}
+
+.meal-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 40px 12px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: var(--transition);
+  position: relative;
+}
+
+/* CHANGE: Modern Timestamp and Button Arrangement */
+/* Explanation: Adjusts timestamp font size, positions it neatly, and prevents button overlap */
+.meal-list li::after {
+  content: attr(data-timestamp);
+  font-size: 0.6rem; /* CHANGE: Further reduced for a smaller, modern appearance */
+  /* Explanation: Makes timestamps even smaller for a cleaner look, modern and subtle */
+  color: #888;
+  position: absolute;
+  right: 12px; /* Reduced right padding for tighter spacing */
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+/* CHANGE: Fix Button Overlap with Timestamp */
+/* Explanation: Adjusts delete button positioning and spacing to prevent overflow */
+.meal-list li .delete-btn {
+  margin-left: 25px; /* Increased space from timestamp to prevent overlap */
+  /* Explanation: Ensures the delete button doesn’t overlap or extend beyond the timestamp, maintaining a modern layout */
+  z-index: 1; /* Ensures button stays above timestamp if overlapping */
+  position: relative;
+}
+
+.meal-list li:hover {
+  background: #e9ecef;
+}
+
+.totals {
+  background: var(--card-bg);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.delete-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.delete-btn:hover {
+  background: #cc0000;
+}
+
+.complete {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Notes */
+#notesInput {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  resize: vertical;
+}
+
+#saveNotes {
+  background: var(--accent-color);
+  color: var(--text-color);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#saveNotes:hover {
+  background: #e6a700;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#saveData, #loadData {
+  background: var(--primary-color);
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#saveData:hover, #loadData:hover {
+  background: #1557b0;
+}
+
+/* In style.css */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.meal-list li {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.sidebar {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.add-meal:hover, .add-activity:hover, .delete-btn:hover {
+  animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 180px;
+  }
+  .main-content.with-sidebar {
+    margin-left: 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    flex-direction: column;
+  }
+  .app-header {
+    position: static;
+    width: 100%;
+    padding: 8px 15px;
+  }
+  .dashboard {
+    padding-top: 40px;
+  }
+  .toggle-btn {
+    top: 8px;
+    left: 10px;
+  }
+  .sidebar {
+    width: 100%;
+    position: fixed;
+    top: 40px;
+    left: 0;
+    height: calc(100vh - 40px);
+  }
+  .sidebar.closed {
+    transform: translateX(-100%);
+  }
+  .main-content {
+    margin-left: 0;
+  }
+  .main-content.with-sidebar {
+    margin-left: 0; /* No shift on mobile; sidebar overlays */
+  }
+  .search-placeholder {
+    display: none; /* Hide search on mobile, Amazon-like */
+  }
+}

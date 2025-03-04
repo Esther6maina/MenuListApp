@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Header (Amazon-like, Gradient with Title, Toggle, Search, and Time) -->
+    <header class="app-header">
+      <button id="toggleSidebar" class="toggle-btn">☰</button>
+      <h1 class="app-title">Food Tracker</h1>
+      <!-- Placeholder for Search (Future Functionality) -->
+      <div class="search-placeholder">
+        <input type="text" class="search-input" placeholder="Search meals, activities..." disabled>
+      </div>
+      <!-- Auto-Updating Time Display -->
+      <div id="currentTime" class="current-time"></div>
+    </header>
+
+    <!-- Sidebar (Modern, starts closed) -->
+    <aside class="sidebar closed">
+      <nav>
+        <ul>
+          <li><button id="mondayBtn" class="day-btn">Monday</button></li>
+          <li><button id="tuesdayBtn" class="day-btn">Tuesday</button></li>
+          <li><button id="wednesdayBtn" class="day-btn">Wednesday</button></li>
+          <li><button id="thursdayBtn" class="day-btn">Thursday</button></li>
+          <li><button id="fridayBtn" class="day-btn">Friday</button></li>
+          <li><button id="saturdayBtn" class="day-btn">Saturday</button></li>
+          <li><button id="sundayBtn" class="day-btn">Sunday</button></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content (Lowered, Scrollable) -->
+    <main class="main-content">
+      <div id="dayContent" class="grid-container">
+        <div class="meal-section">
+          <h3>Breakfast</h3>
+          <div class="input-group">
+            <input type="text" class="meal-input" placeholder="Add item">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="breakfast"></ul>
+        </div>
+
+        <div class="meal-section">
+          <h3>Lunch</h3>
+          <div class="input-group">
+            <input type="text" class="meal-input" placeholder="Add item">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="lunch"></ul>
+        </div>
+
+        <div class="meal-section">
+          <h3>Dinner</h3>
+          <div class="input-group">
+            <input type="text" class="meal-input" placeholder="Add item">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="dinner"></ul>
+        </div>
+
+        <div class="meal-section">
+          <h3>Snacks</h3>
+          <div class="input-group">
+            <input type="text" class="meal-input" placeholder="Add item">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="snacks"></ul>
+        </div>
+
+        <div class="activity-section">
+          <h3>Physical Activity</h3>
+          <div class="input-group">
+            <input type="text" class="meal-input" placeholder="Add activity">
+            <button class="add-activity">+</button>
+          </div>
+          <ul class="meal-list" data-meal="physical-activity"></ul>
+        </div>
+
+        <div class="notes-section">
+          <h3>Notes</h3>
+          <textarea id="notesInput" placeholder="Enter your notes..."></textarea>
+          <button id="saveNotes">Save Notes</button>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="saveData">Save Data</button>
+        <button id="loadData">Load Data</button>
+      </div>
+    </main>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
