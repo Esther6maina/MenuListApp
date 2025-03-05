@@ -10,50 +10,175 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveNotesBtn = document.getElementById('saveNotes');
   const saveDataBtn = document.getElementById('saveData');
   const loadDataBtn = document.getElementById('loadData');
-  const dayButtons = {
-    monday: document.getElementById('mondayBtn'),
-    tuesday: document.getElementById('tuesdayBtn'),
-    wednesday: document.getElementById('wednesdayBtn'),
-    thursday: document.getElementById('thursdayBtn'),
-    friday: document.getElementById('fridayBtn'),
-    saturday: document.getElementById('saturdayBtn'),
-    sunday: document.getElementById('sundayBtn')
-  };
-  const toggleSidebarBtn = document.getElementById('toggleSidebar');
-  if (!toggleSidebarBtn) {
-    console.error('Toggle sidebar button not found in DOM. Check index.html for id="toggleSidebar"');
-    return;
-  }
-  const sidebar = document.querySelector('.sidebar');
-  const mainContent = document.querySelector('.main-content');
+  const searchInput = document.getElementById('searchInput');
+  const dayFilter = document.getElementById('dayFilter');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const searchModal = document.getElementById('searchModal');
+  const closeModal = document.querySelector('.close-modal');
+  const searchResults = document.getElementById('searchResults');
+  const autocompleteSuggestions = document.createElement('ul');
+  autocompleteSuggestions.className = 'autocomplete-suggestions';
+  searchInput.parentNode.appendChild(autocompleteSuggestions);
 
   console.log('DOM fully loaded, initializing...');
 
-  // Sidebar Toggle Functionality
-  function toggleSidebar() {
-    const isClosed = sidebar.classList.toggle('closed');
-    mainContent.classList.toggle('with-sidebar', !isClosed);
-    console.log('Sidebar toggled:', isClosed ? 'Closed' : 'Open');
-  }
+  // Collect all items for autocomplete and search
+  let allItems = [];
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  days.forEach(day => {
+    const key = `data-${day}`;
+    const savedData = localStorage.getItem(key);
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      Object.keys(data.meals).forEach(mealType => {
+        data.meals[mealType].forEach(item => {
+          allItems.push({ text: item.text, timestamp: item.timestamp, day, type: 'meal', category: mealType });
+        });
+      });
+      data.activity.forEach(item => {
+        allItems.push({ text: item.text, timestamp: item.timestamp, day, type: 'activity', category: 'physical-activity' });
+      });
+    }
+  });
 
-  if (toggleSidebarBtn) {
-    toggleSidebarBtn.addEventListener('click', toggleSidebar);
-  } else {
-    console.error('Cannot add click listener to toggleSidebarBtn: element is null');
-  }
-
-  // Day Selection via Sidebar
-  Object.keys(dayButtons).forEach(day => {
-    const button = dayButtons[day];
-    if (button) {
-      button.addEventListener('click', () => {
-        currentDay = day;
-        switchDay();
-        console.log(`Switched to ${currentDay}`); // Debug: Confirm day switch
+  // Autocomplete Functionality
+  function showAutocomplete(query) {
+    autocompleteSuggestions.style.display = 'block';
+    const suggestions = allItems
+      .filter(item => item.text.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 5) // Show top 5 suggestions
+      .map(item => item.text);
+    autocompleteSuggestions.innerHTML = '';
+    if (suggestions.length > 0) {
+      suggestions.forEach(suggestion => {
+        const li = document.createElement('li');
+        li.textContent = suggestion;
+        li.addEventListener('click', () => {
+          searchInput.value = suggestion;
+          autocompleteSuggestions.style.display = 'none';
+          searchItems(suggestion, dayFilter.value, categoryFilter.value);
+        });
+        autocompleteSuggestions.appendChild(li);
       });
     } else {
-      console.error(`Day button for ${day} not found`);
+      autocompleteSuggestions.innerHTML = '<li>No suggestions</li>';
     }
+  }
+
+  // Hide Autocomplete on Blur or Outside Click
+  searchInput.addEventListener('blur', () => {
+    setTimeout(() => autocompleteSuggestions.style.display = 'none', 200);
+  });
+
+  window.addEventListener('click', (event) => {
+    if (!searchInput.contains(event.target) && !autocompleteSuggestions.contains(event.target)) {
+      autocompleteSuggestions.style.display = 'none';
+    }
+  });
+
+  // Search Functionality with Day and Category Filters
+  function searchItems(query, day = 'all', category = 'all') {
+    const results = allItems.filter(item =>
+      item.text.toLowerCase().includes(query.toLowerCase()) &&
+      (day === 'all' || item.day === day) &&
+      (category === 'all' || item.category === category)
+    );
+    displaySearchResults(results);
+  }
+
+  // Display Search Results in Modal with Delete Functionality
+  function displaySearchResults(results) {
+    searchResults.innerHTML = '';
+    if (results.length === 0) {
+      searchResults.innerHTML = '<li>No results found.</li>';
+    } else {
+      results.forEach(item => {
+        const li = createListItem(item.text, item.timestamp);
+        li.classList.add('search-result');
+        li.dataset.day = item.day;
+        li.dataset.type = item.type;
+        li.dataset.category = item.category;
+        searchResults.appendChild(li);
+
+        // Add delete functionality for search results
+        const deleteBtn = li.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', () => {
+          deleteSearchItem(li, item.day, item.type, item.category, item.text, item.timestamp);
+        });
+      });
+    }
+    searchModal.style.display = 'block';
+  }
+
+  // Delete Item from Search Results
+  function deleteSearchItem(li, day, type, category, text, timestamp) {
+    const key = `data-${day}`;
+    const savedData = localStorage.getItem(key);
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      if (type === 'meal') {
+        data.meals[category] = data.meals[category].filter(item =>
+          item.text !== text || item.timestamp !== timestamp
+        );
+      } else if (type === 'activity') {
+        data.activity = data.activity.filter(item =>
+          item.text !== text || item.timestamp !== timestamp
+        );
+      }
+      localStorage.setItem(key, JSON.stringify(data));
+      li.remove();
+      updateTotals(); // Update totals after deletion
+      updateAnalytics(); // Update analytics after deletion
+    }
+  }
+
+  // Close Modal
+  closeModal.addEventListener('click', () => {
+    searchModal.style.display = 'none';
+  });
+
+  // Close Modal on Outside Click
+  window.addEventListener('click', (event) => {
+    if (event.target === searchModal) {
+      searchModal.style.display = 'none';
+    }
+  });
+
+  // Search Input Event Listener with Autocomplete and Filters
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    if (query.length > 0) {
+      showAutocomplete(query); // Show autocomplete suggestions
+      searchItems(query, dayFilter.value, categoryFilter.value); // Perform search
+    } else {
+      autocompleteSuggestions.style.display = 'none';
+      searchModal.style.display = 'none';
+      searchResults.innerHTML = '';
+    }
+  });
+
+  // Day and Category Filter Event Listeners
+  dayFilter.addEventListener('change', (e) => {
+    const query = searchInput.value.trim();
+    if (query.length > 0) {
+      searchItems(query, e.target.value, categoryFilter.value);
+    }
+  });
+
+  categoryFilter.addEventListener('change', (e) => {
+    const query = searchInput.value.trim();
+    if (query.length > 0) {
+      searchItems(query, dayFilter.value, e.target.value);
+    }
+  });
+
+  // Update Day Navigation via Day Filter
+  dayFilter.addEventListener('change', (e) => {
+    currentDay = e.target.value === 'all' ? 'monday' : e.target.value;
+    loadData();
+    updateTotals();
+    updateAnalytics();
+    console.log(`Switched to ${currentDay} via day filter`);
   });
 
   // Debounce Utility for Auto-Save
@@ -137,14 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const li = document.createElement('li');
     const time = timestamp || new Date();
     const timeString = time.toLocaleString('en-US', {
-    month: 'short', // e.g., "Feb"
-    day: 'numeric', // e.g., "28"
-    hour: 'numeric', // e.g., "8"
-    minute: 'numeric', // e.g., "49"
-    hour12: true // e.g., "PM"
-  });
+      month: 'short', // e.g., "Mar"
+      day: 'numeric', // e.g., "5"
+      hour: 'numeric', // e.g., "3"
+      minute: 'numeric', // e.g., "30"
+      hour12: true // e.g., "PM"
+    });
     li.textContent = text; // Text only in content
-    li.setAttribute('data-timestamp', timeString);  
+    li.setAttribute('data-timestamp', timeString);
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
     deleteBtn.className = 'delete-btn';
@@ -157,10 +282,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleListClick(event) {
     const li = event.target.closest('li');
     if (!li) return;
-
+  
     if (event.target.className === 'delete-btn') {
-      li.parentElement.removeChild(li);
-      debouncedSave();
+      li.classList.add('deleting');
+      setTimeout(() => {
+        li.parentElement.removeChild(li);
+        debouncedSave();
+      }, 500); // Match animation duration
     } else if (event.target.tagName === 'LI') {
       li.classList.toggle('complete');
       debouncedSave();
@@ -172,30 +300,40 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCurrentTime(); // Use existing time update function
   }
 
-  // Switch Day - Enhanced for Debugging
-  function switchDay() {
-    if (!dayContent) {
-      console.error('dayContent element not found');
-      return;
-    }
-    dayContent.classList.add('fade');
-    
-    Object.keys(dayButtons).forEach(day => {
-      const button = dayButtons[day];
-      if (button) {
-        button.classList.remove('active');
-        if (day === currentDay) {
-          button.classList.add('active');
-        }
-      }
-    });
+  // Update Analytics
+  function updateAnalytics() {
+    const key = `data-${currentDay}`;
+    const savedData = localStorage.getItem(key);
+    const mealTotals = document.getElementById('mealTotals');
 
-    setTimeout(() => {
-      loadData();
-      initSections(); // Reinitialize to ensure add buttons work after switching
-      console.log(`Loaded data for ${currentDay}:`, localStorage.getItem(`data-${currentDay}`)); // Debug: Log loaded data
-      dayContent.classList.remove('fade');
-    }, 300);
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      let mealCount = 0, activityCount = 0;
+
+      Object.keys(data.meals).forEach(mealType => {
+        mealCount += data.meals[mealType].length;
+      });
+      activityCount = data.activity.length;
+
+      mealTotals.textContent = `Total Meals: ${mealCount} | Total Activities: ${activityCount}`;
+    } else {
+      mealTotals.textContent = 'No data available for today.';
+    }
+  }
+
+  // Update Totals
+  function updateTotals() {
+    const mealLists = document.querySelectorAll('.meal-section .meal-list');
+    const activityList = document.querySelector('.activity-section .meal-list');
+    let mealCount = 0, activityCount = 0;
+  
+    mealLists.forEach(list => mealCount += list.children.length);
+    if (activityList) activityCount = activityList.children.length;
+  
+    const totalsElement = document.querySelector('.totals');
+    if (totalsElement) {
+      totalsElement.textContent = `Total Meals: ${mealCount} | Total Activities: ${activityCount}`;
+    }
   }
 
   // Get List Data
@@ -212,35 +350,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return items;
   }
 
-  // Save Data with Debounce
-  const debouncedSave = debounce(saveData, 500);
+ // Save Data with Debounce for All Days
+ const debouncedSave = debounce(saveData, 500);
 
-  function saveData() {
-    const data = {
-      meals: {},
-      activity: [],
-      notes: notesInput.value
-    };
+ function saveData() {
+   const data = {
+     meals: {
+       breakfast: getListData(document.querySelector('.meal-section[data-meal="breakfast"] .meal-list')),
+       lunch: getListData(document.querySelector('.meal-section[data-meal="lunch"] .meal-list')),
+       dinner: getListData(document.querySelector('.meal-section[data-meal="dinner"] .meal-list')),
+       snacks: getListData(document.querySelector('.meal-section[data-meal="snacks"] .meal-list'))
+     },
+     activity: getListData(document.querySelector('.activity-section .meal-list')),
+     notes: notesInput.value
+   };
 
-    document.querySelectorAll('.meal-section').forEach(section => {
-      const mealType = section.querySelector('.meal-list').dataset.meal;
-      data.meals[mealType] = getListData(section.querySelector('.meal-list'));
-    });
-
-    const activitySection = document.querySelector('.activity-section');
-    data.activity = getListData(activitySection.querySelector('.meal-list'));
-
-    // CHANGE: Removed currentMonth from key
-    // Explanation: Since we removed month navigation, use only currentDay for storage
-    const key = `data-${currentDay}`;
-    localStorage.setItem(key, JSON.stringify(data));
-    console.log(`Auto-saved data for ${key}:`, data);
-  }
+   const key = `data-${currentDay}`;
+   localStorage.setItem(key, JSON.stringify(data));
+   console.log(`Auto-saved data for ${key}:`, data);
+   updateAllItems(); // Update allItems after saving
+ }
 
   // Load Data - Enhanced for Debugging
   function loadData() {
-    // CHANGE: Removed currentMonth from key
-    // Explanation: Simplified key to use only currentDay, fixing the undefined error
     const key = `data-${currentDay}`;
     const savedData = localStorage.getItem(key);
     console.log(`Attempting to load data for ${key}:`, savedData);
@@ -287,19 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       console.log(`No saved data found for ${key}`);
     }
-  }
-  function updateTotals() {
-    const mealLists = document.querySelectorAll('.meal-section .meal-list');
-    const activityList = document.querySelector('.activity-section .meal-list');
-    let mealCount = 0, activityCount = 0;
-  
-    mealLists.forEach(list => mealCount += list.children.length);
-    if (activityList) activityCount = activityList.children.length;
-  
-    const totalsElement = document.querySelector('.totals');
-    if (totalsElement) {
-      totalsElement.textContent = `Total Meals: ${mealCount} | Total Activities: ${activityCount}`;
-    }
+    updateAnalytics(); // Update analytics after loading data
+    updateTotals(); // Ensure totals update as well
   }
 
   // Event Listeners
@@ -311,5 +432,5 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Initial setup starting...');
   updateTimeDisplay();
   initSections();
-  loadData(); // Load initial data for default day (monday)
+  loadData();
 });
