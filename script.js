@@ -86,6 +86,69 @@ document.addEventListener('DOMContentLoaded', () => {
     displaySearchResults(results);
   }
 
+  // In searchItems or searchInput event listener
+const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+
+function saveSearch(query) {
+  if (query.trim() && !searchHistory.includes(query)) {
+    searchHistory.unshift(query);
+    if (searchHistory.length > 5) searchHistory.pop();
+    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+  }
+}
+
+searchInput.addEventListener('input', (e) => {
+  const query = e.target.value.trim();
+  if (query.length > 0) {
+    showAutocomplete(query);
+    searchItems(query, dayFilter.value, categoryFilter.value);
+    saveSearch(query);
+  } else {
+    autocompleteSuggestions.style.display = 'none';
+    searchModal.style.display = 'none';
+    searchResults.innerHTML = '';
+  }
+});
+
+// Display Search History in Modal or Dropdown
+function showSearchHistory() {
+  const historyModal = document.createElement('div');
+  historyModal.className = 'modal';
+  historyModal.innerHTML = `
+    <div class="modal-content">
+      <span class="close-modal">×</span>
+      <h2>Search History</h2>
+      <ul id="searchHistoryList" class="meal-list"></ul>
+    </div>
+  `;
+  document.body.appendChild(historyModal);
+
+  const searchHistoryList = document.getElementById('searchHistoryList');
+  searchHistory.forEach(query => {
+    const li = document.createElement('li');
+    li.textContent = query;
+    li.addEventListener('click', () => {
+      searchInput.value = query;
+      searchItems(query, dayFilter.value, categoryFilter.value);
+      document.body.removeChild(historyModal);
+    });
+    searchHistoryList.appendChild(li);
+  });
+
+  const closeHistoryModal = historyModal.querySelector('.close-modal');
+  closeHistoryModal.addEventListener('click', () => document.body.removeChild(historyModal));
+  window.addEventListener('click', (event) => {
+    if (event.target === historyModal) document.body.removeChild(historyModal);
+  });
+}
+
+// Add a button or trigger for history (e.g., in .search-placeholder)
+const historyBtn = document.createElement('button');
+historyBtn.textContent = 'History';
+historyBtn.className = 'history-btn';
+searchInput.parentNode.appendChild(historyBtn);
+historyBtn.addEventListener('click', showSearchHistory);
+
   // Display Search Results in Modal with Delete Functionality
   function displaySearchResults(results) {
     searchResults.innerHTML = '';
@@ -131,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateAnalytics(); // Update analytics after deletion
     }
   }
+
 
   // Close Modal
   closeModal.addEventListener('click', () => {
@@ -257,10 +321,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Create List Item with Timestamp
-  function createListItem(text, timestamp = null) {
+  function createListItem(text, timestamp = null, calories = 0, duration = 0) {
     console.log('Creating list item with text:', text, 'Timestamp:', timestamp);
     const li = document.createElement('li');
-    const time = timestamp || new Date();
+    const time = timestamp || new Date('2025-03-05T20:58:00');
     const timeString = time.toLocaleString('en-US', {
       month: 'short', // e.g., "Mar"
       day: 'numeric', // e.g., "5"
@@ -270,6 +334,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     li.textContent = text; // Text only in content
     li.setAttribute('data-timestamp', timeString);
+    li.dataset.calories = calories;
+    li.dataset.duration = duration;
+    const calorieInput = prompt('Enter calories for this item (optional):');
+    if (calorieInput) li.dataset.calories = parseInt(calorieInput) || 0;
+    if (section.querySelector('.add-activity')) {
+      const durationInput = prompt('Enter duration in minutes (optional):');
+      if (durationInput) li.dataset.duration = parseInt(durationInput) || 0;
+    }
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
     deleteBtn.className = 'delete-btn';
@@ -308,14 +380,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (savedData) {
       const data = JSON.parse(savedData);
-      let mealCount = 0, activityCount = 0;
+      let mealCount = 0, activityCount = 0, totalCalories = 0, totalDuration = 0;
 
       Object.keys(data.meals).forEach(mealType => {
         mealCount += data.meals[mealType].length;
+        data.meals[mealType].forEach(item => totalCalories += item.calories || 0);
       });
       activityCount = data.activity.length;
+      data.activity.forEach(item => {
+        totalCalories -= item.calories || 0; // Subtract for calorie burn
+        totalDuration += item.duration || 0;
+      });
 
-      mealTotals.textContent = `Total Meals: ${mealCount} | Total Activities: ${activityCount}`;
+      mealTotals.textContent = `Total Meals: ${mealCount} (${totalCalories} calories) | Total Activities: ${activityCount} (${totalDuration} min)`;
     } else {
       mealTotals.textContent = 'No data available for today.';
     }
@@ -353,23 +430,32 @@ document.addEventListener('DOMContentLoaded', () => {
  // Save Data with Debounce for All Days
  const debouncedSave = debounce(saveData, 500);
 
- function saveData() {
-   const data = {
-     meals: {
-       breakfast: getListData(document.querySelector('.meal-section[data-meal="breakfast"] .meal-list')),
-       lunch: getListData(document.querySelector('.meal-section[data-meal="lunch"] .meal-list')),
-       dinner: getListData(document.querySelector('.meal-section[data-meal="dinner"] .meal-list')),
-       snacks: getListData(document.querySelector('.meal-section[data-meal="snacks"] .meal-list'))
-     },
-     activity: getListData(document.querySelector('.activity-section .meal-list')),
-     notes: notesInput.value
-   };
+// In saveData
+function saveData() {
+  const data = {
+    meals: {
+      breakfast: getListData(document.querySelector('.meal-section[data-meal="breakfast"] .meal-list')),
+      lunch: getListData(document.querySelector('.meal-section[data-meal="lunch"] .meal-list')),
+      dinner: getListData(document.querySelector('.meal-section[data-meal="dinner"] .meal-list')),
+      snacks: getListData(document.querySelector('.meal-section[data-meal="snacks"] .meal-list'))
+    },
+    activity: getListData(document.querySelector('.activity-section .meal-list')),
+    notes: notesInput.value
+  };
+  data.meals.breakfast.forEach(item => item.calories = item.element.dataset.calories || 0);
+  data.meals.lunch.forEach(item => item.calories = item.element.dataset.calories || 0);
+  data.meals.dinner.forEach(item => item.calories = item.element.dataset.calories || 0);
+  data.meals.snacks.forEach(item => item.calories = item.element.dataset.calories || 0);
+  data.activity.forEach(item => item.calories = item.element.dataset.calories || 0); // For activities (e.g., calorie burn)
+  data.activity.forEach(item => {
+    item.duration = item.element.dataset.duration || 0;
+  });
 
-   const key = `data-${currentDay}`;
-   localStorage.setItem(key, JSON.stringify(data));
-   console.log(`Auto-saved data for ${key}:`, data);
-   updateAllItems(); // Update allItems after saving
- }
+  const key = `data-${currentDay}`;
+  localStorage.setItem(key, JSON.stringify(data));
+  console.log(`Auto-saved data for ${key}:`, data);
+  updateAllItems();
+}
 
   // Load Data - Enhanced for Debugging
   function loadData() {
@@ -394,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (list) {
           console.log(`Loading meals for ${mealType}:`, data.meals[mealType]);
           data.meals[mealType].forEach(item => {
-            const li = createListItem(item.text, item.timestamp);
+            const li = createListItem(item.text, item.timestamp, item.calories);
             if (item.completed) li.classList.add('complete');
             list.appendChild(li);
           });
@@ -407,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (activityList) {
         console.log('Loading activities:', data.activity);
         data.activity.forEach(item => {
-          const li = createListItem(item.text, item.timestamp);
+          const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
           if (item.completed) li.classList.add('complete');
           activityList.appendChild(li);
         });
@@ -422,6 +508,34 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAnalytics(); // Update analytics after loading data
     updateTotals(); // Ensure totals update as well
   }
+  // Update Analytics for Calories
+function updateCalorieAnalytics() {
+  const key = `data-${currentDay}`;
+  const savedData = localStorage.getItem(key);
+  const mealTotals = document.getElementById('mealTotals');
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    let totalCalories = 0;
+    Object.keys(data.meals).forEach(mealType => {
+      data.meals[mealType].forEach(item => totalCalories += item.calories || 0);
+    });
+    data.activity.forEach(item => totalCalories -= item.calories || 0); // Subtract for activities (calorie burn)
+    mealTotals.textContent = `Total Meals: ${totalCalories} calories | Total Activities: ${data.activity.length}`;
+  }
+}
+
+// Update Analytics for Duration
+function updateDurationAnalytics() {
+  const key = `data-${currentDay}`;
+  const savedData = localStorage.getItem(key);
+  const mealTotals = document.getElementById('mealTotals');
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    let totalDuration = 0;
+    data.activity.forEach(item => totalDuration += item.duration || 0);
+    mealTotals.textContent += ` | Total Activity Duration: ${totalDuration} min`;
+  }
+}
 
   // Event Listeners
   if (saveNotesBtn) saveNotesBtn.addEventListener('click', saveData);
