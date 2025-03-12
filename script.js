@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // DOM Elements
   const monthNav = {
-    display: document.getElementById('currentTime') // Reused for time display
+    display: document.getElementById('currentTime')
   };
   const dayContent = document.getElementById('dayContent');
   const notesInput = document.getElementById('notesInput');
@@ -19,27 +19,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const autocompleteSuggestions = document.createElement('ul');
   autocompleteSuggestions.className = 'autocomplete-suggestions';
   searchInput.parentNode.appendChild(autocompleteSuggestions);
+  const historyBtn = document.getElementById('historyBtn');
 
   console.log('DOM fully loaded, initializing...');
 
   // Collect all items for autocomplete and search
   let allItems = [];
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  days.forEach(day => {
-    const key = `data-${day}`;
-    const savedData = localStorage.getItem(key);
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      Object.keys(data.meals).forEach(mealType => {
-        data.meals[mealType].forEach(item => {
-          allItems.push({ text: item.text, timestamp: item.timestamp, day, type: 'meal', category: mealType });
-        });
-      });
-      data.activity.forEach(item => {
-        allItems.push({ text: item.text, timestamp: item.timestamp, day, type: 'activity', category: 'physical-activity' });
-      });
+  updateAllItems(); // Initialize allItems with current data
+
+  // Fetch all items from the backend for autocomplete and search
+  async function updateAllItems() {
+    allItems = [];
+    try {
+      for (const day of days) {
+        const response = await fetch(`/api/search?query=&day=${day}`);
+        const items = await response.json();
+        allItems.push(...items);
+      }
+    } catch (err) {
+      console.error('Error fetching items for autocomplete:', err);
     }
-  });
+  }
 
   // Autocomplete Functionality
   function showAutocomplete(query) {
@@ -77,77 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Search Functionality with Day and Category Filters
-  function searchItems(query, day = 'all', category = 'all') {
-    const results = allItems.filter(item =>
-      item.text.toLowerCase().includes(query.toLowerCase()) &&
-      (day === 'all' || item.day === day) &&
-      (category === 'all' || item.category === category)
-    );
-    displaySearchResults(results);
+  async function searchItems(query, day = 'all', category = 'all') {
+    try {
+      const response = await fetch(`/api/search?query=${encodeURIComponent(query)}&day=${day}&category=${category}`);
+      const results = await response.json();
+      displaySearchResults(results);
+    } catch (err) {
+      console.error('Error searching items:', err);
+      displaySearchResults([]);
+    }
   }
-
-  // In searchItems or searchInput event listener
-const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
-
-function saveSearch(query) {
-  if (query.trim() && !searchHistory.includes(query)) {
-    searchHistory.unshift(query);
-    if (searchHistory.length > 5) searchHistory.pop();
-    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-  }
-}
-
-searchInput.addEventListener('input', (e) => {
-  const query = e.target.value.trim();
-  if (query.length > 0) {
-    showAutocomplete(query);
-    searchItems(query, dayFilter.value, categoryFilter.value);
-    saveSearch(query);
-  } else {
-    autocompleteSuggestions.style.display = 'none';
-    searchModal.style.display = 'none';
-    searchResults.innerHTML = '';
-  }
-});
-
-// Display Search History in Modal or Dropdown
-function showSearchHistory() {
-  const historyModal = document.createElement('div');
-  historyModal.className = 'modal';
-  historyModal.innerHTML = `
-    <div class="modal-content">
-      <span class="close-modal">×</span>
-      <h2>Search History</h2>
-      <ul id="searchHistoryList" class="meal-list"></ul>
-    </div>
-  `;
-  document.body.appendChild(historyModal);
-
-  const searchHistoryList = document.getElementById('searchHistoryList');
-  searchHistory.forEach(query => {
-    const li = document.createElement('li');
-    li.textContent = query;
-    li.addEventListener('click', () => {
-      searchInput.value = query;
-      searchItems(query, dayFilter.value, categoryFilter.value);
-      document.body.removeChild(historyModal);
-    });
-    searchHistoryList.appendChild(li);
-  });
-
-  const closeHistoryModal = historyModal.querySelector('.close-modal');
-  closeHistoryModal.addEventListener('click', () => document.body.removeChild(historyModal));
-  window.addEventListener('click', (event) => {
-    if (event.target === historyModal) document.body.removeChild(historyModal);
-  });
-}
-
-// Add a button or trigger for history (e.g., in .search-placeholder)
-const historyBtn = document.createElement('button');
-historyBtn.textContent = 'History';
-historyBtn.className = 'history-btn';
-searchInput.parentNode.appendChild(historyBtn);
-historyBtn.addEventListener('click', showSearchHistory);
 
   // Display Search Results in Modal with Delete Functionality
   function displaySearchResults(results) {
@@ -156,8 +96,9 @@ historyBtn.addEventListener('click', showSearchHistory);
       searchResults.innerHTML = '<li>No results found.</li>';
     } else {
       results.forEach(item => {
-        const li = createListItem(item.text, item.timestamp);
+        const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
         li.classList.add('search-result');
+        li.dataset.id = item.id;
         li.dataset.day = item.day;
         li.dataset.type = item.type;
         li.dataset.category = item.category;
@@ -166,7 +107,7 @@ historyBtn.addEventListener('click', showSearchHistory);
         // Add delete functionality for search results
         const deleteBtn = li.querySelector('.delete-btn');
         deleteBtn.addEventListener('click', () => {
-          deleteSearchItem(li, item.day, item.type, item.category, item.text, item.timestamp);
+          deleteSearchItem(li, item.id, item.day, item.type, item.category);
         });
       });
     }
@@ -174,27 +115,19 @@ historyBtn.addEventListener('click', showSearchHistory);
   }
 
   // Delete Item from Search Results
-  function deleteSearchItem(li, day, type, category, text, timestamp) {
-    const key = `data-${day}`;
-    const savedData = localStorage.getItem(key);
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      if (type === 'meal') {
-        data.meals[category] = data.meals[category].filter(item =>
-          item.text !== text || item.timestamp !== timestamp
-        );
-      } else if (type === 'activity') {
-        data.activity = data.activity.filter(item =>
-          item.text !== text || item.timestamp !== timestamp
-        );
-      }
-      localStorage.setItem(key, JSON.stringify(data));
+  async function deleteSearchItem(li, id, day, type, category) {
+    try {
+      const endpoint = type === 'meal' ? `/api/meals/${id}` : `/api/activities/${id}`;
+      const response = await fetch(endpoint, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete item');
       li.remove();
-      updateTotals(); // Update totals after deletion
-      updateAnalytics(); // Update analytics after deletion
+      updateTotals();
+      updateAnalytics();
+      updateAllItems();
+    } catch (err) {
+      console.error('Error deleting item:', err);
     }
   }
-
 
   // Close Modal
   closeModal.addEventListener('click', () => {
@@ -212,8 +145,9 @@ historyBtn.addEventListener('click', showSearchHistory);
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim();
     if (query.length > 0) {
-      showAutocomplete(query); // Show autocomplete suggestions
-      searchItems(query, dayFilter.value, categoryFilter.value); // Perform search
+      showAutocomplete(query);
+      searchItems(query, dayFilter.value, categoryFilter.value);
+      saveSearch(query); // Save search history
     } else {
       autocompleteSuggestions.style.display = 'none';
       searchModal.style.display = 'none';
@@ -223,10 +157,15 @@ historyBtn.addEventListener('click', showSearchHistory);
 
   // Day and Category Filter Event Listeners
   dayFilter.addEventListener('change', (e) => {
+    currentDay = e.target.value === 'all' ? 'monday' : e.target.value;
     const query = searchInput.value.trim();
     if (query.length > 0) {
       searchItems(query, e.target.value, categoryFilter.value);
     }
+    loadData();
+    updateTotals();
+    updateAnalytics();
+    console.log(`Switched to ${currentDay} via day filter`);
   });
 
   categoryFilter.addEventListener('change', (e) => {
@@ -236,14 +175,58 @@ historyBtn.addEventListener('click', showSearchHistory);
     }
   });
 
-  // Update Day Navigation via Day Filter
-  dayFilter.addEventListener('change', (e) => {
-    currentDay = e.target.value === 'all' ? 'monday' : e.target.value;
-    loadData();
-    updateTotals();
-    updateAnalytics();
-    console.log(`Switched to ${currentDay} via day filter`);
-  });
+  // Search History Management
+  async function saveSearch(query) {
+    try {
+      await fetch('/api/search-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+    } catch (err) {
+      console.error('Error saving search query:', err);
+    }
+  }
+
+  async function showSearchHistory() {
+    try {
+      const response = await fetch('/api/search-history');
+      const searchHistory = await response.json();
+
+      const historyModal = document.createElement('div');
+      historyModal.className = 'modal';
+      historyModal.innerHTML = `
+        <div class="modal-content">
+          <span class="close-modal">×</span>
+          <h2>Search History</h2>
+          <ul id="searchHistoryList" class="meal-list"></ul>
+        </div>
+      `;
+      document.body.appendChild(historyModal);
+
+      const searchHistoryList = historyModal.querySelector('#searchHistoryList');
+      searchHistory.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item.query;
+        li.addEventListener('click', () => {
+          searchInput.value = item.query;
+          searchItems(item.query, dayFilter.value, categoryFilter.value);
+          document.body.removeChild(historyModal);
+        });
+        searchHistoryList.appendChild(li);
+      });
+
+      const closeHistoryModal = historyModal.querySelector('.close-modal');
+      closeHistoryModal.addEventListener('click', () => document.body.removeChild(historyModal));
+      window.addEventListener('click', (event) => {
+        if (event.target === historyModal) document.body.removeChild(historyModal);
+      });
+    } catch (err) {
+      console.error('Error fetching search history:', err);
+    }
+  }
+
+  if (historyBtn) historyBtn.addEventListener('click', showSearchHistory);
 
   // Debounce Utility for Auto-Save
   function debounce(func, wait) {
@@ -261,12 +244,12 @@ historyBtn.addEventListener('click', showSearchHistory);
       dateStyle: 'medium',
       timeStyle: 'short'
     });
-    monthNav.display.textContent = timeString; // Update time display
+    monthNav.display.textContent = timeString;
   }
 
   // Initialize and Update Time Every Second
-  updateCurrentTime(); // Set initial time
-  setInterval(updateCurrentTime, 1000); // Update every second
+  updateCurrentTime();
+  setInterval(updateCurrentTime, 1000);
 
   // Initialize Sections
   function initSections() {
@@ -309,7 +292,7 @@ historyBtn.addEventListener('click', showSearchHistory);
         }
 
         console.log('Creating and adding item:', text);
-        const li = createListItem(text);
+        const li = createListItem(text, null, null, section.querySelector('.add-activity') ? null : 0);
         list.appendChild(li);
         input.value = '';
         debouncedSave();
@@ -324,24 +307,31 @@ historyBtn.addEventListener('click', showSearchHistory);
   function createListItem(text, timestamp = null, calories = 0, duration = 0) {
     console.log('Creating list item with text:', text, 'Timestamp:', timestamp);
     const li = document.createElement('li');
-    const time = timestamp || new Date('2025-03-05T20:58:00');
+    const time = timestamp || new Date();
     const timeString = time.toLocaleString('en-US', {
-      month: 'short', // e.g., "Mar"
-      day: 'numeric', // e.g., "5"
-      hour: 'numeric', // e.g., "3"
-      minute: 'numeric', // e.g., "30"
-      hour12: true // e.g., "PM"
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
     });
-    li.textContent = text; // Text only in content
+    li.textContent = text;
     li.setAttribute('data-timestamp', timeString);
     li.dataset.calories = calories;
     li.dataset.duration = duration;
-    const calorieInput = prompt('Enter calories for this item (optional):');
-    if (calorieInput) li.dataset.calories = parseInt(calorieInput) || 0;
-    if (section.querySelector('.add-activity')) {
+
+    // Prompt for calories for meals
+    if (!li.closest('.activity-section')) {
+      const calorieInput = prompt('Enter calories for this item (optional):');
+      if (calorieInput) li.dataset.calories = parseInt(calorieInput) || 0;
+    }
+
+    // Prompt for duration for activities
+    if (li.closest('.activity-section')) {
       const durationInput = prompt('Enter duration in minutes (optional):');
       if (durationInput) li.dataset.duration = parseInt(durationInput) || 0;
     }
+
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
     deleteBtn.className = 'delete-btn';
@@ -351,16 +341,25 @@ historyBtn.addEventListener('click', showSearchHistory);
   }
 
   // Handle List Clicks
-  function handleListClick(event) {
+  async function handleListClick(event) {
     const li = event.target.closest('li');
     if (!li) return;
-  
+
     if (event.target.className === 'delete-btn') {
       li.classList.add('deleting');
-      setTimeout(() => {
-        li.parentElement.removeChild(li);
-        debouncedSave();
-      }, 500); // Match animation duration
+      setTimeout(async () => {
+        try {
+          const endpoint = li.closest('.activity-section') ? `/api/activities/${li.dataset.id}` : `/api/meals/${li.dataset.id}`;
+          const response = await fetch(endpoint, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Failed to delete item');
+          li.parentElement.removeChild(li);
+          updateTotals();
+          updateAnalytics();
+          updateAllItems();
+        } catch (err) {
+          console.error('Error deleting item:', err);
+        }
+      }, 500);
     } else if (event.target.tagName === 'LI') {
       li.classList.toggle('complete');
       debouncedSave();
@@ -369,17 +368,16 @@ historyBtn.addEventListener('click', showSearchHistory);
 
   // Update Time Display
   function updateTimeDisplay() {
-    updateCurrentTime(); // Use existing time update function
+    updateCurrentTime();
   }
 
   // Update Analytics
-  function updateAnalytics() {
-    const key = `data-${currentDay}`;
-    const savedData = localStorage.getItem(key);
-    const mealTotals = document.getElementById('mealTotals');
+  async function updateAnalytics() {
+    try {
+      const response = await fetch(`/api/data/${currentDay}`);
+      const data = await response.json();
+      const mealTotals = document.getElementById('mealTotals');
 
-    if (savedData) {
-      const data = JSON.parse(savedData);
       let mealCount = 0, activityCount = 0, totalCalories = 0, totalDuration = 0;
 
       Object.keys(data.meals).forEach(mealType => {
@@ -388,13 +386,14 @@ historyBtn.addEventListener('click', showSearchHistory);
       });
       activityCount = data.activity.length;
       data.activity.forEach(item => {
-        totalCalories -= item.calories || 0; // Subtract for calorie burn
+        totalCalories -= item.calories || 0;
         totalDuration += item.duration || 0;
       });
 
       mealTotals.textContent = `Total Meals: ${mealCount} (${totalCalories} calories) | Total Activities: ${activityCount} (${totalDuration} min)`;
-    } else {
-      mealTotals.textContent = 'No data available for today.';
+    } catch (err) {
+      console.error('Error updating analytics:', err);
+      document.getElementById('mealTotals').textContent = 'Error loading analytics.';
     }
   }
 
@@ -403,10 +402,10 @@ historyBtn.addEventListener('click', showSearchHistory);
     const mealLists = document.querySelectorAll('.meal-section .meal-list');
     const activityList = document.querySelector('.activity-section .meal-list');
     let mealCount = 0, activityCount = 0;
-  
+
     mealLists.forEach(list => mealCount += list.children.length);
     if (activityList) activityCount = activityList.children.length;
-  
+
     const totalsElement = document.querySelector('.totals');
     if (totalsElement) {
       totalsElement.textContent = `Total Meals: ${mealCount} | Total Activities: ${activityCount}`;
@@ -416,71 +415,73 @@ historyBtn.addEventListener('click', showSearchHistory);
   // Get List Data
   function getListData(list) {
     const items = [];
-    list.querySelectorAll('li').forEach(li => {
-      const [text, timestamp] = li.textContent.replace('Delete', '').trim().split(' - ');
-      items.push({
-        text: text || '',
-        timestamp: timestamp || '',
-        completed: li.classList.contains('complete')
+    if (list) {
+      list.querySelectorAll('li').forEach(li => {
+        const [text, timestamp] = li.textContent.replace('Delete', '').trim().split(' - ');
+        items.push({
+          text: text || '',
+          timestamp: timestamp || '',
+          completed: li.classList.contains('complete'),
+          calories: parseInt(li.dataset.calories) || 0,
+          duration: parseInt(li.dataset.duration) || 0
+        });
       });
-    });
+    }
     return items;
   }
 
- // Save Data with Debounce for All Days
- const debouncedSave = debounce(saveData, 500);
+  // Save Data with Debounce
+  const debouncedSave = debounce(saveData, 500);
 
-// In saveData
-function saveData() {
-  const data = {
-    meals: {
-      breakfast: getListData(document.querySelector('.meal-section[data-meal="breakfast"] .meal-list')),
-      lunch: getListData(document.querySelector('.meal-section[data-meal="lunch"] .meal-list')),
-      dinner: getListData(document.querySelector('.meal-section[data-meal="dinner"] .meal-list')),
-      snacks: getListData(document.querySelector('.meal-section[data-meal="snacks"] .meal-list'))
-    },
-    activity: getListData(document.querySelector('.activity-section .meal-list')),
-    notes: notesInput.value
-  };
-  data.meals.breakfast.forEach(item => item.calories = item.element.dataset.calories || 0);
-  data.meals.lunch.forEach(item => item.calories = item.element.dataset.calories || 0);
-  data.meals.dinner.forEach(item => item.calories = item.element.dataset.calories || 0);
-  data.meals.snacks.forEach(item => item.calories = item.element.dataset.calories || 0);
-  data.activity.forEach(item => item.calories = item.element.dataset.calories || 0); // For activities (e.g., calorie burn)
-  data.activity.forEach(item => {
-    item.duration = item.element.dataset.duration || 0;
-  });
+  async function saveData() {
+    const data = {
+      meals: {
+        breakfast: getListData(document.querySelector('.meal-section[data-meal="breakfast"] .meal-list')),
+        lunch: getListData(document.querySelector('.meal-section[data-meal="lunch"] .meal-list')),
+        dinner: getListData(document.querySelector('.meal-section[data-meal="dinner"] .meal-list')),
+        snacks: getListData(document.querySelector('.meal-section[data-meal="snacks"] .meal-list'))
+      },
+      activity: getListData(document.querySelector('.activity-section .meal-list')),
+      notes: notesInput.value
+    };
 
-  const key = `data-${currentDay}`;
-  localStorage.setItem(key, JSON.stringify(data));
-  console.log(`Auto-saved data for ${key}:`, data);
-  updateAllItems();
-}
-
-  // Load Data - Enhanced for Debugging
-  function loadData() {
-    const key = `data-${currentDay}`;
-    const savedData = localStorage.getItem(key);
-    console.log(`Attempting to load data for ${key}:`, savedData);
-
-    if (!dayContent) {
-      console.error('dayContent element not found for loading data');
-      return;
+    try {
+      const response = await fetch(`/api/data/${currentDay}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to save data');
+      console.log(`Data saved for ${currentDay}:`, data);
+      updateAllItems();
+    } catch (err) {
+      console.error('Error saving data:', err);
     }
+  }
 
-    document.querySelectorAll('.meal-list').forEach(list => list.innerHTML = '');
-    notesInput.value = '';
+  // Load Data
+  async function loadData() {
+    try {
+      const response = await fetch(`/api/data/${currentDay}`);
+      if (!response.ok) throw new Error('Failed to load data');
+      const data = await response.json();
+      console.log(`Loaded data for ${currentDay}:`, data);
 
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      console.log('Parsed data:', data);
+      if (!dayContent) {
+        console.error('dayContent element not found for loading data');
+        return;
+      }
+
+      document.querySelectorAll('.meal-list').forEach(list => list.innerHTML = '');
+      notesInput.value = '';
 
       Object.keys(data.meals).forEach(mealType => {
         const list = document.querySelector(`.meal-list[data-meal="${mealType}"]`);
         if (list) {
           console.log(`Loading meals for ${mealType}:`, data.meals[mealType]);
           data.meals[mealType].forEach(item => {
-            const li = createListItem(item.text, item.timestamp, item.calories);
+            const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
+            li.dataset.id = item.id;
             if (item.completed) li.classList.add('complete');
             list.appendChild(li);
           });
@@ -494,6 +495,7 @@ function saveData() {
         console.log('Loading activities:', data.activity);
         data.activity.forEach(item => {
           const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
+          li.dataset.id = item.id;
           if (item.completed) li.classList.add('complete');
           activityList.appendChild(li);
         });
@@ -502,40 +504,12 @@ function saveData() {
       }
 
       notesInput.value = data.notes || '';
-    } else {
-      console.log(`No saved data found for ${key}`);
+      updateAnalytics();
+      updateTotals();
+    } catch (err) {
+      console.error('Error loading data:', err);
     }
-    updateAnalytics(); // Update analytics after loading data
-    updateTotals(); // Ensure totals update as well
   }
-  // Update Analytics for Calories
-function updateCalorieAnalytics() {
-  const key = `data-${currentDay}`;
-  const savedData = localStorage.getItem(key);
-  const mealTotals = document.getElementById('mealTotals');
-  if (savedData) {
-    const data = JSON.parse(savedData);
-    let totalCalories = 0;
-    Object.keys(data.meals).forEach(mealType => {
-      data.meals[mealType].forEach(item => totalCalories += item.calories || 0);
-    });
-    data.activity.forEach(item => totalCalories -= item.calories || 0); // Subtract for activities (calorie burn)
-    mealTotals.textContent = `Total Meals: ${totalCalories} calories | Total Activities: ${data.activity.length}`;
-  }
-}
-
-// Update Analytics for Duration
-function updateDurationAnalytics() {
-  const key = `data-${currentDay}`;
-  const savedData = localStorage.getItem(key);
-  const mealTotals = document.getElementById('mealTotals');
-  if (savedData) {
-    const data = JSON.parse(savedData);
-    let totalDuration = 0;
-    data.activity.forEach(item => totalDuration += item.duration || 0);
-    mealTotals.textContent += ` | Total Activity Duration: ${totalDuration} min`;
-  }
-}
 
   // Event Listeners
   if (saveNotesBtn) saveNotesBtn.addEventListener('click', saveData);
