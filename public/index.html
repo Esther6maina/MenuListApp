@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="currentTime"></div>
+  <select id="dayFilter">
+    <option value="all">All Days</option>
+    <option value="monday">Monday</option>
+    <option value="tuesday">Tuesday</option>
+    <!-- Add other days -->
+  </select>
+  <select id="categoryFilter">
+    <option value="all">All Categories</option>
+    <option value="breakfast">Breakfast</option>
+    <option value="lunch">Lunch</option>
+    <!-- Add other categories -->
+  </select>
+  <input id="searchInput" type="text" placeholder="Search items...">
+  <button id="historyBtn">Search History</button>
+  <div id="dayContent">
+    <div class="meal-section" data-meal="breakfast">
+      <h2>Breakfast</h2>
+      <button class="add-meal">+</button>
+      <input class="meal-input" type="text" placeholder="Add meal...">
+      <ul class="meal-list" data-meal="breakfast"></ul>
+    </div>
+    <div class="meal-section" data-meal="lunch">
+      <h2>Lunch</h2>
+      <button class="add-meal">+</button>
+      <input class="meal-input" type="text" placeholder="Add meal...">
+      <ul class="meal-list" data-meal="lunch"></ul>
+    </div>
+    <div class="activity-section">
+      <h2>Activities</h2>
+      <button class="add-activity">+</button>
+      <input class="meal-input" type="text" placeholder="Add activity...">
+      <ul class="meal-list"></ul>
+    </div>
+  </div>
+  <textarea id="notesInput" placeholder="Add notes..."></textarea>
+  <button id="saveNotes">Save Notes</button>
+  <button id="saveData">Save Data</button>
+  <button id="loadData">Load Data</button>
+  <div id="mealTotals"></div>
+  <div class="totals"></div>
+  <div id="searchModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <ul id="searchResults"></ul>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

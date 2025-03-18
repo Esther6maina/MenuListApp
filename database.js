@@ -58,6 +58,10 @@ db.serialize(() => {
   `);
 });
 
+// Add indexes for frequently queried columns
+db.run(`CREATE INDEX IF NOT EXISTS idx_meals_day ON meals (day)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_activities_day ON activities (day)`);
+
 // Helper functions to promisify SQLite operations
 const runQuery = (query, params = []) => {
   return new Promise((resolve, reject) => {

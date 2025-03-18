@@ -20,6 +20,7 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   line-height: 1.6;
+  overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
 /* App Header (Amazon-like, Gradient with Title, Search, and Time) */
@@ -35,8 +36,7 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 15px; /* Increased gap to balance without toggle button */
-  /* Explanation: Adjusted gap to maintain clean layout after removing toggle button */
+  gap: 15px;
 }
 
 /* App Title - Amazon-like Placement */
@@ -55,6 +55,7 @@ body {
   gap: 10px;
   margin-left: 20px;
 }
+
 .history-btn {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -63,6 +64,7 @@ body {
   background: white;
   color: var(--text-color);
   cursor: pointer;
+  transition: var(--transition);
 }
 
 .history-btn:hover {
@@ -71,7 +73,7 @@ body {
 
 /* Search Input with Autocomplete */
 .search-input {
-  width: 200px; /* Reduced width to fit with drop-downs, modern and balanced */
+  width: 200px;
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -80,13 +82,12 @@ body {
   color: var(--text-color);
   opacity: 1;
   cursor: text;
-  position: relative; /* For autocomplete positioning */
+  position: relative;
 }
 
-/* Autocomplete Suggestions */
 .autocomplete-suggestions {
   position: absolute;
-  top: 100%; /* Below search input */
+  top: 100%;
   left: 0;
   right: 0;
   background: var(--card-bg);
@@ -95,7 +96,7 @@ body {
   box-shadow: var(--shadow);
   max-height: 200px;
   overflow-y: auto;
-  z-index: 25; /* Above other elements but below modal */
+  z-index: 25;
   display: none;
   padding: 0;
   margin: 0;
@@ -131,21 +132,19 @@ body {
 /* Dashboard Layout - Adjusted for Header */
 .dashboard {
   display: flex;
-  flex-direction: column; /* Ensure full-width stacking on mobile */
+  flex-direction: column;
   min-height: 100vh;
   width: 100%;
   position: relative;
-  padding-top: 50px;
+  padding-top: 60px; /* Increased to accommodate larger header */
 }
 
-/* Main Content - Make Scrollable */
 .main-content {
   flex: 1;
-  margin-left: 0;
   padding: 20px;
-  overflow-y: auto; /* Ensures main content is scrollable vertically */
-  max-height: calc(100vh - 50px - 40px); /* Adjusts for header and padding */
-  transition: none; /* No transition needed without sidebar */
+  overflow-y: auto;
+  max-height: calc(100vh - 60px - 40px); /* Adjusted for header height */
+  transition: none;
 }
 
 /* Analytics Section */
@@ -206,6 +205,7 @@ body {
 .input-group {
   display: flex;
   margin-bottom: 15px;
+  align-items: center; /* Ensure vertical alignment */
 }
 
 .meal-input {
@@ -222,7 +222,7 @@ body {
 }
 
 .add-meal, .add-activity {
-  padding: 10px;
+  padding: 10px 15px;
   background: var(--secondary-color);
   border: none;
   border-radius: 0 6px 6px 0;
@@ -238,23 +238,23 @@ body {
 
 /* Lists - Remove Dots and Format Timestamp Below Delete Button */
 .meal-list {
-  list-style: none !important;
-  padding-left: 0 !important;
-  margin: 0 !important;
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
 }
 
-/* List Item Layout with Delete Button on Right Above Timestamp */
 .meal-list li {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  padding: 12px 40px 30px 12px;
+  padding: 12px;
   background: #f8f9fa;
   border-radius: 6px;
   margin-bottom: 10px;
   transition: var(--transition);
   position: relative;
+  min-height: 60px; /* Ensure enough space for content */
 }
 
 /* Item Content (Text and Delete Button) */
@@ -266,28 +266,35 @@ body {
   margin-bottom: 8px;
 }
 
-/* Delete Button Positioning on Right Above Timestamp */
 .meal-list li .delete-btn {
-  margin-left: 180px;
-  bottom: 20px;
-  z-index: 1;
-  position: relative;
+  padding: 4px 8px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-left: auto; /* Push to the right */
+}
+
+.meal-list li .delete-btn:hover {
+  background: #cc0000;
+  animation: pulse 0.3s ease-in-out;
 }
 
 /* Timestamp Formatting and Positioning Below Delete Button */
-.meal-list li::after {
+.meal-list li[data-timestamp]:after {
   content: attr(data-timestamp);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: #888;
   position: absolute;
-  right: 12px;
   bottom: 8px;
+  left: 12px;
   white-space: nowrap;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  letter-spacing: 0.5px;
   opacity: 0.9;
 }
 
+/* Ensure timestamp doesn't overlap with delete button */
 .meal-list li:hover {
   background: #e9ecef;
 }
@@ -303,22 +310,6 @@ body {
   color: var(--primary-color);
   font-size: 1.1rem;
   font-weight: 500;
-}
-
-/* Delete Button */
-.delete-btn {
-  background: #ff4444; /* Restored to red */
-  color: white; /* Restored to white */
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.delete-btn:hover {
-  background: #cc0000;
-  animation: pulse 0.3s ease-in-out;
 }
 
 /* Complete State */
@@ -418,7 +409,6 @@ body {
   list-style: none;
   padding-left: 0;
   margin: 0;
-  animation: slideIn 0.5s ease-out;
 }
 
 #searchResults li {
@@ -426,12 +416,13 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  padding: 12px 40px 30px 12px;
+  padding: 12px;
   background: #f8f9fa;
   border-radius: 6px;
   margin-bottom: 10px;
   transition: var(--transition);
   position: relative;
+  min-height: 60px;
 }
 
 #searchResults li .item-content {
@@ -443,21 +434,29 @@ body {
 }
 
 #searchResults li .delete-btn {
-  margin-left: 10px;
-  z-index: 1;
-  position: relative;
+  padding: 4px 8px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-left: auto;
 }
 
-#searchResults li::after {
+#searchResults li .delete-btn:hover {
+  background: #cc0000;
+  animation: pulse 0.3s ease-in-out;
+}
+
+#searchResults li[data-timestamp]:after {
   content: attr(data-timestamp);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: #888;
   position: absolute;
-  right: 12px;
   bottom: 8px;
+  left: 12px;
   white-space: nowrap;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  letter-spacing: 0.5px;
   opacity: 0.9;
 }
 
@@ -467,20 +466,34 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideIn {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-.meal-list li, #searchResults li {
+.meal-list li,
+#searchResults li {
   animation: fadeIn 0.5s ease-out;
 }
 
-.analytics, .totals {
+.analytics,
+.totals {
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -489,25 +502,46 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes slideInMobile {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-10px); }
-  60% { transform: translateY(-5px); }
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .main-content {
-    padding: 15px; /* Slightly reduce padding on tablet */
+    padding: 15px;
   }
 }
 
@@ -521,7 +555,7 @@ body {
     padding: 8px 15px;
   }
   .dashboard {
-    padding-top: 40px;
+    padding-top: 50px;
   }
   .search-placeholder {
     flex-direction: column;
@@ -531,18 +565,19 @@ body {
   .search-input {
     width: 100%;
   }
-  .day-filter, .category-filter {
+  .day-filter,
+  .category-filter {
     width: 100%;
   }
   .main-content {
-    padding: 10px; /* Further reduce padding on mobile */
-    max-height: calc(100vh - 40px - 20px); /* Adjust for smaller header on mobile */
+    padding: 10px;
+    max-height: calc(100vh - 50px - 20px);
   }
   .search-placeholder:focus-within {
     animation: slideInMobile 0.5s ease-out;
   }
-
-  .add-meal:active, .add-activity:active {
+  .add-meal:active,
+  .add-activity:active {
     animation: bounce 0.5s ease-out;
   }
 }

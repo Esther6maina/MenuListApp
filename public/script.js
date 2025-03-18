@@ -376,7 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       addBtn.removeEventListener('click', handleAddItem);
       addBtn.addEventListener('click', () => handleAddItem(input, list, section, logger));
-
       list.removeEventListener('click', handleListClick);
       list.addEventListener('click', handleListClick);
     });
