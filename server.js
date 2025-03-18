@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const db = require('./database.js');
@@ -13,183 +14,153 @@ app.use(express.static('.')); // Serve static files (index.html, style.css, scri
 // API Endpoints
 
 // Get all data for a specific day
-app.get('/api/data/:day', (req, res) => {
-  const day = req.params.day.toLowerCase();
-  const responseData = { meals: {}, activity: [], notes: '' };
+app.get('/api/data/:day', async (req, res) => {
+  try {
+    const day = req.params.day.toLowerCase();
+    const responseData = { meals: {}, activity: [], notes: '' };
 
-  // Get meals
-  db.getMealsByDay(day, (err, meals) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error fetching meals' });
-    }
-
-    // Group meals by meal_type
+    // Get meals
+    const meals = await db.getMealsByDay(day);
     responseData.meals = {
       breakfast: meals.filter(m => m.meal_type === 'breakfast'),
       lunch: meals.filter(m => m.meal_type === 'lunch'),
       dinner: meals.filter(m => m.meal_type === 'dinner'),
-      snacks: meals.filter(m => m.meal_type === 'snacks')
+      snacks: meals.filter(m => m.meal_type === 'snacks'),
     };
 
     // Get activities
-    db.getActivitiesByDay(day, (err, activities) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error fetching activities' });
-      }
-      responseData.activity = activities;
+    responseData.activity = await db.getActivitiesByDay(day);
 
-      // Get notes
-      db.getNotesByDay(day, (err, note) => {
-        if (err) {
-          return res.status(500).json({ error: 'Error fetching notes' });
-        }
-        responseData.notes = note ? note.content : '';
+    // Get notes
+    responseData.notes = await db.getNotesByDay(day);
 
-        res.json(responseData);
-      });
-    });
-  });
+    res.json(responseData);
+  } catch (err) {
+    console.error('Error fetching data for day:', req.params.day, err);
+    res.status(500).json({ error: 'Failed to fetch data', details: err.message });
+  }
 });
 
 // Save data for a specific day
-app.post('/api/data/:day', (req, res) => {
-  const day = req.params.day.toLowerCase();
-  const { meals, activity, notes } = req.body;
+app.post('/api/data/:day', async (req, res) => {
+  try {
+    const day = req.params.day.toLowerCase();
+    const { meals, activity, notes } = req.body;
 
-  // Delete existing meals for the day
-  db.run(`DELETE FROM meals WHERE day = ?`, [day], (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error clearing meals' });
+    // Validate request body
+    if (!meals || !activity || typeof notes !== 'string') {
+      return res.status(400).json({ error: 'Invalid request body: meals, activity, and notes are required' });
     }
 
-    // Add new meals
-    const mealTypes = ['breakfast', 'lunch', 'dinner', 'snacks'];
-    let mealsProcessed = 0;
+    // Delete existing data for the day
+    await Promise.all([
+      db.deleteMealsByDay(day),
+      db.deleteActivitiesByDay(day),
+      db.deleteNotesByDay(day),
+    ]);
 
+    // Add new meals
+    const mealPromises = [];
+    const mealTypes = ['breakfast', 'lunch', 'dinner', 'snacks'];
     mealTypes.forEach(mealType => {
       const mealList = meals[mealType] || [];
       mealList.forEach(meal => {
-        db.addMeal({ ...meal, day, meal_type: mealType }, (err) => {
-          if (err) {
-            console.error(`Error adding ${mealType}:`, err);
-          }
-          mealsProcessed++;
-          if (mealsProcessed === mealTypes.reduce((sum, mt) => sum + (meals[mt] || []).length, 0)) {
-            // Delete existing activities
-            db.run(`DELETE FROM activities WHERE day = ?`, [day], (err) => {
-              if (err) {
-                return res.status(500).json({ error: 'Error clearing activities' });
-              }
-
-              // Add new activities
-              let activitiesProcessed = 0;
-              if (activity.length === 0) {
-                saveNotes();
-                return;
-              }
-
-              activity.forEach(act => {
-                db.addActivity({ ...act, day }, (err) => {
-                  if (err) {
-                    console.error('Error adding activity:', err);
-                  }
-                  activitiesProcessed++;
-                  if (activitiesProcessed === activity.length) {
-                    saveNotes();
-                  }
-                });
-              });
-            });
-          }
-        });
+        mealPromises.push(
+          db.addMeal({ ...meal, day, meal_type: mealType })
+        );
       });
     });
 
-    if (mealsProcessed === 0) {
-      db.run(`DELETE FROM activities WHERE day = ?`, [day], (err) => {
-        if (err) {
-          return res.status(500).json({ error: 'Error clearing activities' });
-        }
-        saveNotes();
-      });
+    // Add new activities
+    const activityPromises = activity.map(act =>
+      db.addActivity({ ...act, day })
+    );
+
+    // Wait for all meals and activities to be added
+    await Promise.all([...mealPromises, ...activityPromises]);
+
+    // Add notes if provided
+    if (notes) {
+      await db.saveNotes({ day, content: notes, timestamp: new Date().toISOString() });
     }
 
-    function saveNotes() {
-      // Delete existing notes for the day
-      db.run(`DELETE FROM notes WHERE day = ?`, [day], (err) => {
-        if (err) {
-          return res.status(500).json({ error: 'Error clearing notes' });
-        }
-
-        // Add new notes if content exists
-        if (notes) {
-          db.saveNotes({ day, content: notes, timestamp: new Date().toISOString() }, (err) => {
-            if (err) {
-              return res.status(500).json({ error: 'Error saving notes' });
-            }
-            res.json({ message: 'Data saved successfully' });
-          });
-        } else {
-          res.json({ message: 'Data saved successfully' });
-        }
-      });
-    }
-  });
+    res.json({ message: 'Data saved successfully' });
+  } catch (err) {
+    console.error('Error saving data for day:', req.params.day, err);
+    res.status(500).json({ error: 'Failed to save data', details: err.message });
+  }
 });
 
 // Delete a meal
-app.delete('/api/meals/:id', (req, res) => {
-  const id = req.params.id;
-  db.deleteMeal(id, (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error deleting meal' });
+app.delete('/api/meals/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid meal ID' });
     }
+    await db.deleteMeal(id);
     res.json({ message: 'Meal deleted successfully' });
-  });
+  } catch (err) {
+    console.error('Error deleting meal:', req.params.id, err);
+    res.status(500).json({ error: 'Failed to delete meal', details: err.message });
+  }
 });
 
 // Delete an activity
-app.delete('/api/activities/:id', (req, res) => {
-  const id = req.params.id;
-  db.deleteActivity(id, (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error deleting activity' });
+app.delete('/api/activities/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid activity ID' });
     }
+    await db.deleteActivity(id);
     res.json({ message: 'Activity deleted successfully' });
-  });
+  } catch (err) {
+    console.error('Error deleting activity:', req.params.id, err);
+    res.status(500).json({ error: 'Failed to delete activity', details: err.message });
+  }
 });
 
 // Search items
-app.get('/api/search', (req, res) => {
-  const { query, day, category } = req.query;
-  db.searchItems(query, day || 'all', category || 'all', (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error searching items' });
+app.get('/api/search', async (req, res) => {
+  try {
+    const { query, day, category } = req.query;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter is required' });
     }
+    const results = await db.searchItems(query, day || 'all', category || 'all');
     res.json(results);
-  });
+  } catch (err) {
+    console.error('Error searching items:', req.query, err);
+    res.status(500).json({ error: 'Failed to search items', details: err.message });
+  }
 });
 
 // Get search history
-app.get('/api/search-history', (req, res) => {
-  db.getSearchHistory((err, history) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error fetching search history' });
-    }
+app.get('/api/search-history', async (req, res) => {
+  try {
+    const history = await db.getSearchHistory();
     res.json(history);
-  });
+  } catch (err) {
+    console.error('Error fetching search history:', err);
+    res.status(500).json({ error: 'Failed to fetch search history', details: err.message });
+  }
 });
 
 // Add search query
-app.post('/api/search-history', (req, res) => {
-  const { query } = req.body;
-  const timestamp = new Date().toISOString();
-  db.addSearchQuery(query, timestamp, (err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error saving search query' });
+app.post('/api/search-history', async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Invalid query in request body' });
     }
+    const timestamp = new Date().toISOString();
+    await db.addSearchQuery(query, timestamp);
     res.json({ message: 'Search query saved successfully' });
-  });
+  } catch (err) {
+    console.error('Error saving search query:', req.body, err);
+    res.status(500).json({ error: 'Failed to save search query', details: err.message });
+  }
 });
 
 // Start the server
@@ -198,8 +169,16 @@ app.listen(port, () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
+const gracefulShutdown = async () => {
   console.log('Shutting down server...');
-  db.close();
-  process.exit(0);
-});
+  try {
+    await db.close();
+    process.exit(0);
+  } catch (err) {
+    console.error('Error during shutdown:', err);
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);

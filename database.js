@@ -1,3 +1,4 @@
+// database.js
 const sqlite3 = require('sqlite3').verbose();
 
 // Initialize SQLite database
@@ -37,17 +38,17 @@ db.serialize(() => {
     )
   `);
 
-  // Table for notes
+  // Table for notes with UNIQUE constraint on day
   db.run(`
     CREATE TABLE IF NOT EXISTS notes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      day TEXT NOT NULL,
+      day TEXT NOT NULL UNIQUE,
       content TEXT,
       timestamp TEXT NOT NULL
     )
   `);
 
-  // Table for search history (optional, for storing recent searches)
+  // Table for search history
   db.run(`
     CREATE TABLE IF NOT EXISTS search_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,153 +58,188 @@ db.serialize(() => {
   `);
 });
 
+// Helper functions to promisify SQLite operations
+const runQuery = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function (err) {
+      if (err) reject(err);
+      else resolve(this);
+    });
+  });
+};
+
+const allQuery = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(query, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
+
+const getQuery = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.get(query, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
 // Export database functions
 module.exports = {
   // Meals
-  getMealsByDay: (day, callback) => {
-    const query = `
-      SELECT * FROM meals WHERE day = ?
-    `;
-    db.all(query, [day], callback);
+  getMealsByDay: async (day) => {
+    const query = `SELECT * FROM meals WHERE day = ?`;
+    return await allQuery(query, [day]);
   },
 
-  addMeal: (meal, callback) => {
+  addMeal: async (meal) => {
     const query = `
       INSERT INTO meals (day, meal_type, text, timestamp, calories, completed)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
-    db.run(
-      query,
-      [meal.day, meal.meal_type, meal.text, meal.timestamp, meal.calories || 0, meal.completed || false],
-      function (err) {
-        callback(err, this.lastID);
-      }
-    );
+    const result = await runQuery(query, [
+      meal.day,
+      meal.meal_type,
+      meal.text,
+      meal.timestamp,
+      meal.calories || 0,
+      meal.completed ? 1 : 0,
+    ]);
+    return result.lastID;
   },
 
-  updateMeal: (id, updates, callback) => {
+  updateMeal: async (id, updates) => {
     const query = `
       UPDATE meals
       SET text = ?, calories = ?, completed = ?
       WHERE id = ?
     `;
-    db.run(
-      query,
-      [updates.text, updates.calories || 0, updates.completed || false, id],
-      callback
-    );
+    await runQuery(query, [
+      updates.text,
+      updates.calories || 0,
+      updates.completed ? 1 : 0,
+      id,
+    ]);
   },
 
-  deleteMeal: (id, callback) => {
-    const query = `
-      DELETE FROM meals WHERE id = ?
-    `;
-    db.run(query, [id], callback);
+  deleteMeal: async (id) => {
+    const query = `DELETE FROM meals WHERE id = ?`;
+    await runQuery(query, [id]);
+  },
+
+  deleteMealsByDay: async (day) => {
+    const query = `DELETE FROM meals WHERE day = ?`;
+    await runQuery(query, [day]);
   },
 
   // Activities
-  getActivitiesByDay: (day, callback) => {
-    const query = `
-      SELECT * FROM activities WHERE day = ?
-    `;
-    db.all(query, [day], callback);
+  getActivitiesByDay: async (day) => {
+    const query = `SELECT * FROM activities WHERE day = ?`;
+    return await allQuery(query, [day]);
   },
 
-  addActivity: (activity, callback) => {
+  addActivity: async (activity) => {
     const query = `
       INSERT INTO activities (day, text, timestamp, calories, duration, completed)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
-    db.run(
-      query,
-      [activity.day, activity.text, activity.timestamp, activity.calories || 0, activity.duration || 0, activity.completed || false],
-      function (err) {
-        callback(err, this.lastID);
-      }
-    );
+    const result = await runQuery(query, [
+      activity.day,
+      activity.text,
+      activity.timestamp,
+      activity.calories || 0,
+      activity.duration || 0,
+      activity.completed ? 1 : 0,
+    ]);
+    return result.lastID;
   },
 
-  updateActivity: (id, updates, callback) => {
+  updateActivity: async (id, updates) => {
     const query = `
       UPDATE activities
       SET text = ?, calories = ?, duration = ?, completed = ?
       WHERE id = ?
     `;
-    db.run(
-      query,
-      [updates.text, updates.calories || 0, updates.duration || 0, updates.completed || false, id],
-      callback
-    );
+    await runQuery(query, [
+      updates.text,
+      updates.calories || 0,
+      updates.duration || 0,
+      updates.completed ? 1 : 0,
+      id,
+    ]);
   },
 
-  deleteActivity: (id, callback) => {
-    const query = `
-      DELETE FROM activities WHERE id = ?
-    `;
-    db.run(query, [id], callback);
+  deleteActivity: async (id) => {
+    const query = `DELETE FROM activities WHERE id = ?`;
+    await runQuery(query, [id]);
+  },
+
+  deleteActivitiesByDay: async (day) => {
+    const query = `DELETE FROM activities WHERE day = ?`;
+    await runQuery(query, [day]);
   },
 
   // Notes
-  getNotesByDay: (day, callback) => {
-    const query = `
-      SELECT * FROM notes WHERE day = ?
-      ORDER BY timestamp DESC LIMIT 1
-    `;
-    db.get(query, [day], callback);
+  getNotesByDay: async (day) => {
+    const query = `SELECT * FROM notes WHERE day = ?`;
+    const note = await getQuery(query, [day]);
+    return note ? note.content : '';
   },
 
-  saveNotes: (note, callback) => {
+  saveNotes: async (note) => {
+    // Use INSERT OR REPLACE to handle the UNIQUE constraint on day
     const query = `
-      INSERT INTO notes (day, content, timestamp)
+      INSERT OR REPLACE INTO notes (day, content, timestamp)
       VALUES (?, ?, ?)
     `;
-    db.run(query, [note.day, note.content, note.timestamp], function (err) {
-      callback(err, this.lastID);
-    });
+    const result = await runQuery(query, [note.day, note.content, note.timestamp]);
+    return result.lastID;
+  },
+
+  deleteNotesByDay: async (day) => {
+    const query = `DELETE FROM notes WHERE day = ?`;
+    await runQuery(query, [day]);
   },
 
   // Search History
-  getSearchHistory: (callback) => {
+  getSearchHistory: async () => {
     const query = `
       SELECT query, timestamp FROM search_history
       ORDER BY timestamp DESC LIMIT 5
     `;
-    db.all(query, [], callback);
+    return await allQuery(query, []);
   },
 
-  addSearchQuery: (query, timestamp, callback) => {
-    // First, check if query exists to avoid duplicates
-    db.get(`SELECT id FROM search_history WHERE query = ?`, [query], (err, row) => {
-      if (row) {
-        // If exists, update timestamp
-        db.run(
-          `UPDATE search_history SET timestamp = ? WHERE id = ?`,
-          [timestamp, row.id],
-          callback
-        );
-      } else {
-        // Insert new query
-        db.run(
-          `INSERT INTO search_history (query, timestamp) VALUES (?, ?)`,
-          [query, timestamp],
-          function (err) {
-            // Keep only the latest 5 entries
-            db.run(`
-              DELETE FROM search_history
-              WHERE id NOT IN (
-                SELECT id FROM search_history
-                ORDER BY timestamp DESC LIMIT 5
-              )
-            `);
-            callback(err, this.lastID);
-          }
-        );
-      }
-    });
+  addSearchQuery: async (query, timestamp) => {
+    const existing = await getQuery(`SELECT id FROM search_history WHERE query = ?`, [query]);
+    if (existing) {
+      // Update timestamp if query exists
+      await runQuery(
+        `UPDATE search_history SET timestamp = ? WHERE id = ?`,
+        [timestamp, existing.id]
+      );
+    } else {
+      // Insert new query
+      const result = await runQuery(
+        `INSERT INTO search_history (query, timestamp) VALUES (?, ?)`,
+        [query, timestamp]
+      );
+      // Keep only the latest 5 entries
+      await runQuery(`
+        DELETE FROM search_history
+        WHERE id NOT IN (
+          SELECT id FROM search_history
+          ORDER BY timestamp DESC LIMIT 5
+        )
+      `);
+      return result.lastID;
+    }
   },
 
   // Search Items (meals and activities)
-  searchItems: (query, day, category, callback) => {
+  searchItems: async (query, day, category) => {
     let mealsQuery = `
       SELECT id, day, meal_type AS category, text, timestamp, calories, 'meal' AS type
       FROM meals
@@ -226,27 +262,30 @@ module.exports = {
       params.push(category);
     }
 
-    mealsQuery += ` UNION ` + activitiesQuery;
-
+    let finalQuery = mealsQuery + ` UNION ` + activitiesQuery;
     if (category === 'physical-activity' && day !== 'all') {
       activitiesQuery += ` AND day = ?`;
-      params.push(day);
-      mealsQuery = activitiesQuery;
+      params.push(day); // Push day again for activities query
+      finalQuery = activitiesQuery;
     } else if (category === 'physical-activity') {
-      mealsQuery = activitiesQuery;
+      finalQuery = activitiesQuery;
     }
 
-    db.all(mealsQuery, params, callback);
+    return await allQuery(finalQuery, params);
   },
 
-  // Close database on app shutdown (optional)
+  // Close database on app shutdown
   close: () => {
-    db.close((err) => {
-      if (err) {
-        console.error('Error closing database:', err.message);
-      } else {
-        console.log('Database connection closed.');
-      }
+    return new Promise((resolve, reject) => {
+      db.close((err) => {
+        if (err) {
+          console.error('Error closing database:', err.message);
+          reject(err);
+        } else {
+          console.log('Database connection closed.');
+          resolve();
+        }
+      });
     });
-  }
+  },
 };

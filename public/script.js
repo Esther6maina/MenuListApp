@@ -1,3 +1,96 @@
+// public/script.js
+
+// Export testable functions and objects (available in Node.js for testing)
+const validate = {
+  isNonEmpty: (value) => !!value && value.trim().length > 0,
+  isValidDay: (value) => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'all'].includes(value.toLowerCase()),
+  isValidCategory: (value) => ['all', 'breakfast', 'lunch', 'dinner', 'snacks', 'physical-activity'].includes(value.toLowerCase()),
+};
+
+function createListItem(text, timestamp = null, calories = 0, duration = 0, document = global.document) {
+  const li = document.createElement('li');
+  const time = timestamp || new Date();
+  const timeString = timestamp ? timestamp : time.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true
+  });
+  li.textContent = `${text} - ${timeString}`;
+  li.setAttribute('data-timestamp', timeString);
+  li.dataset.calories = calories;
+  li.dataset.duration = duration;
+
+  if (!li.closest('.activity-section')) {
+    const calorieInput = typeof prompt === 'function' ? prompt('Enter calories for this item (optional):') : null;
+    if (calorieInput) li.dataset.calories = parseInt(calorieInput) || 0;
+  }
+
+  if (li.closest('.activity-section')) {
+    const durationInput = typeof prompt === 'function' ? prompt('Enter duration in minutes (optional):') : null;
+    if (durationInput) li.dataset.duration = parseInt(durationInput) || 0;
+  }
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.className = 'delete-btn';
+  li.appendChild(deleteBtn);
+  setTimeout(() => li.classList.add('fadeIn'), 10);
+  return li;
+}
+
+function getListData(list, document = global.document) {
+  const items = [];
+  if (list) {
+    list.querySelectorAll('li').forEach(li => {
+      const [text, timestamp] = li.textContent.replace('Delete', '').trim().split(' - ');
+      items.push({
+        text: text || '',
+        timestamp: li.getAttribute('data-timestamp') || '',
+        completed: li.classList.contains('complete'),
+        calories: parseInt(li.dataset.calories) || 0,
+        duration: parseInt(li.dataset.duration) || 0
+      });
+    });
+  }
+  return items;
+}
+
+function handleAddItem(input, list, section, logger = console) {
+  logger.info('Add button clicked!');
+  const text = input.value.trim();
+  logger.info('Input text:', { text });
+
+  const errors = [];
+  if (!validate.isNonEmpty(text)) {
+    errors.push('Item text cannot be empty.');
+  }
+  if (errors.length > 0) {
+    alert(errors.join('\n'));
+    logger.warn('Validation errors:', { errors });
+    return;
+  }
+
+  const existingItems = Array.from(list.querySelectorAll('li')).map(li =>
+    li.textContent.split(' - ')[0].trim().toLowerCase()
+  );
+  logger.info('Existing items:', { existingItems });
+
+  if (existingItems.includes(text.toLowerCase())) {
+    alert('This item already exists!');
+    logger.warn('Duplicate detected:', { text });
+    return;
+  }
+
+  logger.info('Creating and adding item:', { text });
+  const li = createListItem(text, null, null, section.querySelector('.add-activity') ? null : 0);
+  list.appendChild(li);
+  input.value = '';
+  debouncedSave();
+}
+
+// Browser-specific code wrapped in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
   let currentDay = 'monday';
 
@@ -23,31 +116,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('DOM fully loaded, initializing...');
 
-  const { validate } = {
-    isNonEmpty: (value) => !!value && value.trim().length > 0,
-    isValidDay: (value) => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'all'].includes(value.toLowerCase()),
-    isValidCategory: (value) => ['all', 'breakfast', 'lunch', 'dinner', 'snacks', 'physical-activity'].includes(value.toLowerCase()),
-  };
-
-  const winston = require('winston'); // Assume installed via npm
-
-  const logger = winston.createLogger({
-    level: 'info',
-
-    format: winston.format.combine(
-     winston.format.timestamp(),
-     winston.format.json()
-   ),
-   transports: [
-     new winston.transports.File({ filename: 'frontend.log', level: 'info' }),
-     new winston.transports.Console(),
-   ],
-  });
+  // Use console as the default logger in the browser
+  const logger = console;
 
   // Collect all items for autocomplete and search
   let allItems = [];
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  updateAllItems(); // Initialize allItems with current data
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sun day'];
+  updateAllItems();
 
   // Fetch all items from the backend for autocomplete and search
   async function updateAllItems() {
@@ -59,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allItems.push(...items);
       }
     } catch (err) {
-      console.error('Error fetching items for autocomplete:', err);
+      logger.error('Error fetching items for autocomplete:', { error: err.message });
     }
   }
 
@@ -68,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     autocompleteSuggestions.style.display = 'block';
     const suggestions = allItems
       .filter(item => item.text.toLowerCase().includes(query.toLowerCase()))
-      .slice(0, 5) // Show top 5 suggestions
+      .slice(0, 5)
       .map(item => item.text);
     autocompleteSuggestions.innerHTML = '';
     if (suggestions.length > 0) {
@@ -105,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const results = await response.json();
       displaySearchResults(results);
     } catch (err) {
-      console.error('Error searching items:', err);
+      logger.error('Error searching items:', { error: err.message });
       displaySearchResults([]);
     }
   }
@@ -125,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
         li.dataset.category = item.category;
         searchResults.appendChild(li);
 
-        // Add delete functionality for search results
         const deleteBtn = li.querySelector('.delete-btn');
         deleteBtn.addEventListener('click', () => {
           deleteSearchItem(li, item.id, item.day, item.type, item.category);
@@ -180,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showAutocomplete(query);
       logger.info('Searching items with filters:', { query, day: dayFilter.value, category: categoryFilter.value });
       searchItems(query, dayFilter.value, categoryFilter.value);
-      saveSearch(query); // Save search history
+      saveSearch(query);
     } else {
       logger.info('Clearing search UI due to empty query');
       autocompleteSuggestions.style.display = 'none';
@@ -218,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ query })
       });
     } catch (err) {
-      console.error('Error saving search query:', err);
+      logger.error('Error saving search query:', { error: err.message });
     }
   }
 
@@ -256,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === historyModal) document.body.removeChild(historyModal);
       });
     } catch (err) {
-      console.error('Error fetching search history:', err);
+      logger.error('Error fetching search history:', { error: err.message });
     }
   }
 
@@ -301,87 +375,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Found add button:', addBtn);
 
       addBtn.removeEventListener('click', handleAddItem);
-      addBtn.addEventListener('click', handleAddItem);
-
-      function handleAddItem() {
-        logger.info('Add button clicked!');
-        const text = input.value.trim();
-        logger.info('Input text:', { text });
-
-        const errors = [];
-        if (!validate.isNonEmpty(text)) {
-        errors.push('Item text cannot be empty.');
-        }
-        if (errors.length > 0) {
-          alert(errors.join('\n'));
-          logger.warn('Validation errors:', { errors });
-          return;
-        }
-
-        if (!text) {
-          alert('Please enter an item!');
-          console.log('Empty input detected');
-          return;
-        }
-
-        const existingItems = Array.from(list.querySelectorAll('li')).map(li =>
-          li.textContent.split(' - ')[0].trim().toLowerCase()
-        );
-        logger.info('Existing items:', { existingItems });
-
-        if (existingItems.includes(text.toLowerCase())) {
-          alert('This item already exists!');
-          logger.warn('Duplicate detected:', { text });
-          return;
-        }
-
-        logger.info('Creating and adding item:', { text });
-        const li = createListItem(text, null, null, section.querySelector('.add-activity') ? null : 0);
-        list.appendChild(li);
-        input.value = '';
-        debouncedSave();
-      }
+      addBtn.addEventListener('click', () => handleAddItem(input, list, section, logger));
 
       list.removeEventListener('click', handleListClick);
       list.addEventListener('click', handleListClick);
     });
-  }
-
-  // Create List Item with Timestamp
-  function createListItem(text, timestamp = null, calories = 0, duration = 0) {
-    console.log('Creating list item with text:', text, 'Timestamp:', timestamp);
-    const li = document.createElement('li');
-    const time = timestamp || new Date();
-    const timeString = time.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
-    li.textContent = text;
-    li.setAttribute('data-timestamp', timeString);
-    li.dataset.calories = calories;
-    li.dataset.duration = duration;
-
-    // Prompt for calories for meals
-    if (!li.closest('.activity-section')) {
-      const calorieInput = prompt('Enter calories for this item (optional):');
-      if (calorieInput) li.dataset.calories = parseInt(calorieInput) || 0;
-    }
-
-    // Prompt for duration for activities
-    if (li.closest('.activity-section')) {
-      const durationInput = prompt('Enter duration in minutes (optional):');
-      if (durationInput) li.dataset.duration = parseInt(durationInput) || 0;
-    }
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.className = 'delete-btn';
-    li.appendChild(deleteBtn);
-    setTimeout(() => li.classList.add('fadeIn'), 10);
-    return li;
   }
 
   // Handle List Clicks
@@ -401,18 +399,13 @@ document.addEventListener('DOMContentLoaded', () => {
           updateAnalytics();
           updateAllItems();
         } catch (err) {
-          console.error('Error deleting item:', err);
+          logger.error('Error deleting item:', { error: err.message });
         }
       }, 500);
     } else if (event.target.tagName === 'LI') {
       li.classList.toggle('complete');
       debouncedSave();
     }
-  }
-
-  // Update Time Display
-  function updateTimeDisplay() {
-    updateCurrentTime();
   }
 
   // Update Analytics
@@ -436,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       mealTotals.textContent = `Total Meals: ${mealCount} (${totalCalories} calories) | Total Activities: ${activityCount} (${totalDuration} min)`;
     } catch (err) {
-      console.error('Error updating analytics:', err);
+      logger.error('Error updating analytics:', { error: err.message });
       document.getElementById('mealTotals').textContent = 'Error loading analytics.';
     }
   }
@@ -455,39 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
       totalsElement.textContent = `Total Meals: ${mealCount} | Total Activities: ${activityCount}`;
     }
   }
-
-  // Get List Data
-  function getListData(list) {
-    const items = [];
-    if (list) {
-      list.querySelectorAll('li').forEach(li => {
-        const [text, timestamp] = li.textContent.replace('Delete', '').trim().split(' - ');
-        items.push({
-          text: text || '',
-          timestamp: timestamp || '',
-          completed: li.classList.contains('complete'),
-          calories: parseInt(li.dataset.calories) || 0,
-          duration: parseInt(li.dataset.duration) || 0
-        });
-      });
-    }
-    return items;
-  }
-
-  const { body, param, validationResult } = require('express-validator');
-
-app.post('/api/data/:day', [
-  param('day').isIn(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']).withMessage('Invalid day'),
-  body('meals').isObject().withMessage('Meals must be an object'),
-  body('activity').isArray().withMessage('Activity must be an array'),
-  body('notes').isString().withMessage('Notes must be a string'),
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  // Proceed with saving data
-});
 
   // Save Data with Debounce
   const debouncedSave = debounce(saveData, 500);
@@ -511,10 +471,10 @@ app.post('/api/data/:day', [
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error('Failed to save data');
-      console.log(`Data saved for ${currentDay}:`, data);
+      logger.info(`Data saved for ${currentDay}:`, data);
       updateAllItems();
     } catch (err) {
-      console.error('Error saving data:', err);
+      logger.error('Error saving data:', { error: err.message });
     }
   }
 
@@ -524,10 +484,10 @@ app.post('/api/data/:day', [
       const response = await fetch(`/api/data/${currentDay}`);
       if (!response.ok) throw new Error('Failed to load data');
       const data = await response.json();
-      console.log(`Loaded data for ${currentDay}:`, data);
+      logger.info(`Loaded data for ${currentDay}:`, data);
 
       if (!dayContent) {
-        console.error('dayContent element not found for loading data');
+        logger.error('dayContent element not found for loading data');
         return;
       }
 
@@ -537,7 +497,7 @@ app.post('/api/data/:day', [
       Object.keys(data.meals).forEach(mealType => {
         const list = document.querySelector(`.meal-list[data-meal="${mealType}"]`);
         if (list) {
-          console.log(`Loading meals for ${mealType}:`, data.meals[mealType]);
+          logger.info(`Loading meals for ${mealType}:`, data.meals[mealType]);
           data.meals[mealType].forEach(item => {
             const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
             li.dataset.id = item.id;
@@ -545,13 +505,13 @@ app.post('/api/data/:day', [
             list.appendChild(li);
           });
         } else {
-          console.error(`Meal list for ${mealType} not found`);
+          logger.error(`Meal list for ${mealType} not found`);
         }
       });
 
       const activityList = document.querySelector('.activity-section .meal-list');
       if (activityList) {
-        console.log('Loading activities:', data.activity);
+        logger.info('Loading activities:', data.activity);
         data.activity.forEach(item => {
           const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
           li.dataset.id = item.id;
@@ -559,14 +519,14 @@ app.post('/api/data/:day', [
           activityList.appendChild(li);
         });
       } else {
-        console.error('Activity list not found');
+        logger.error('Activity list not found');
       }
 
       notesInput.value = data.notes || '';
       updateAnalytics();
       updateTotals();
     } catch (err) {
-      console.error('Error loading data:', err);
+      logger.error('Error loading data:', { error: err.message });
     }
   }
 
@@ -581,3 +541,13 @@ app.post('/api/data/:day', [
   initSections();
   loadData();
 });
+
+// Export for Node.js testing
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    handleAddItem,
+    createListItem,
+    getListData,
+    validate,
+  };
+}
