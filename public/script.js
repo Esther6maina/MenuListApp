@@ -9,18 +9,28 @@ const validate = {
 
 function createListItem(text, timestamp = null, calories = 0, duration = 0, document = global.document) {
   const li = document.createElement('li');
-  const time = timestamp || new Date();
-  const timeString = timestamp ? timestamp : time.toLocaleString('en-US', {
+  const time = timestamp ? new Date(timestamp) : new Date();
+  const timeString = time.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
     hour12: true
   });
-  li.textContent = `${text} - ${timeString}`;
+  
+  const itemContent = document.createElement('div');
+  itemContent.className = 'item-content';
+  itemContent.textContent = text;
+  
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.className = 'delete-btn';
+  itemContent.appendChild(deleteBtn);
+  
+  li.appendChild(itemContent);
   li.setAttribute('data-timestamp', timeString);
-  li.dataset.calories = calories;
-  li.dataset.duration = duration;
+  li.dataset.calories = calories || 0;
+  li.dataset.duration = duration || 0;
 
   if (!li.closest('.activity-section')) {
     const calorieInput = typeof prompt === 'function' ? prompt('Enter calories for this item (optional):') : null;
@@ -32,10 +42,6 @@ function createListItem(text, timestamp = null, calories = 0, duration = 0, docu
     if (durationInput) li.dataset.duration = parseInt(durationInput) || 0;
   }
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = 'Delete';
-  deleteBtn.className = 'delete-btn';
-  li.appendChild(deleteBtn);
   setTimeout(() => li.classList.add('fadeIn'), 10);
   return li;
 }
@@ -44,7 +50,7 @@ function getListData(list, document = global.document) {
   const items = [];
   if (list) {
     list.querySelectorAll('li').forEach(li => {
-      const [text, timestamp] = li.textContent.replace('Delete', '').trim().split(' - ');
+      const text = li.querySelector('.item-content').childNodes[0].textContent.trim();
       items.push({
         text: text || '',
         timestamp: li.getAttribute('data-timestamp') || '',
@@ -73,7 +79,7 @@ function handleAddItem(input, list, section, logger = console) {
   }
 
   const existingItems = Array.from(list.querySelectorAll('li')).map(li =>
-    li.textContent.split(' - ')[0].trim().toLowerCase()
+    li.querySelector('.item-content').childNodes[0].textContent.trim().toLowerCase()
   );
   logger.info('Existing items:', { existingItems });
 
@@ -84,10 +90,31 @@ function handleAddItem(input, list, section, logger = console) {
   }
 
   logger.info('Creating and adding item:', { text });
-  const li = createListItem(text, null, null, section.querySelector('.add-activity') ? null : 0);
+  const li = createListItem(text, null, 0, section.querySelector('.add-activity') ? 0 : null);
   list.appendChild(li);
   input.value = '';
   debouncedSave();
+}
+
+// Update the current time display
+function updateTimeDisplay() {
+  const timeElement = document.querySelector('.current-time');
+  if (timeElement) {
+    const now = new Date();
+    timeElement.textContent = now.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+}
+
+// Set up the interval to update time every minute
+function startTimeUpdate() {
+  updateTimeDisplay(); // Initial call
+  setInterval(updateTimeDisplay, 60000); // Update every minute
 }
 
 // Browser-specific code wrapped in DOMContentLoaded
@@ -95,9 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentDay = 'monday';
 
   // DOM Elements
-  const monthNav = {
-    display: document.getElementById('currentTime')
-  };
   const dayContent = document.getElementById('dayContent');
   const notesInput = document.getElementById('notesInput');
   const saveNotesBtn = document.getElementById('saveNotes');
@@ -109,9 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchModal = document.getElementById('searchModal');
   const closeModal = document.querySelector('.close-modal');
   const searchResults = document.getElementById('searchResults');
-  const autocompleteSuggestions = document.createElement('ul');
-  autocompleteSuggestions.className = 'autocomplete-suggestions';
-  searchInput.parentNode.appendChild(autocompleteSuggestions);
+  const autocompleteSuggestions = document.querySelector('.autocomplete-suggestions');
   const historyBtn = document.getElementById('historyBtn');
 
   console.log('DOM fully loaded, initializing...');
@@ -121,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Collect all items for autocomplete and search
   let allItems = [];
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sun day'];
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   updateAllItems();
 
   // Fetch all items from the backend for autocomplete and search
@@ -129,7 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     allItems = [];
     try {
       for (const day of days) {
-        const response = await fetch(`/api/search?query=&day=${day}`);
+        const response = await fetch(`/api/search?query=.*&day=${day}`); // Use a wildcard query to fetch all items
+        if (!response.ok) throw new Error(`Failed to fetch items for day ${day}`);
         const items = await response.json();
         allItems.push(...items);
       }
@@ -153,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         li.addEventListener('click', () => {
           searchInput.value = suggestion;
           autocompleteSuggestions.style.display = 'none';
-          searchItems(suggestion, dayFilter.value, categoryFilter.value);
+          searchItems(suggestion, dayFilter.value, categoryFilter.value).then(displaySearchResults);
         });
         autocompleteSuggestions.appendChild(li);
       });
@@ -175,13 +198,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Search Functionality with Day and Category Filters
   async function searchItems(query, day = 'all', category = 'all') {
+    if (!query || query.trim() === '') {
+      console.warn('Empty query, skipping search');
+      return [];
+    }
+
     try {
       const response = await fetch(`/api/search?query=${encodeURIComponent(query)}&day=${day}&category=${category}`);
-      const results = await response.json();
-      displaySearchResults(results);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
     } catch (err) {
-      logger.error('Error searching items:', { error: err.message });
-      displaySearchResults([]);
+      console.error('Error fetching items for autocomplete:', err);
+      return [];
     }
   }
 
@@ -253,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logger.info('Showing autocomplete for query:', { query });
       showAutocomplete(query);
       logger.info('Searching items with filters:', { query, day: dayFilter.value, category: categoryFilter.value });
-      searchItems(query, dayFilter.value, categoryFilter.value);
+      searchItems(query, dayFilter.value, categoryFilter.value).then(displaySearchResults);
       saveSearch(query);
     } else {
       logger.info('Clearing search UI due to empty query');
@@ -268,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentDay = e.target.value === 'all' ? 'monday' : e.target.value;
     const query = searchInput.value.trim();
     if (query.length > 0) {
-      searchItems(query, e.target.value, categoryFilter.value);
+      searchItems(query, e.target.value, categoryFilter.value).then(displaySearchResults);
     }
     loadData();
     updateTotals();
@@ -279,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
   categoryFilter.addEventListener('change', (e) => {
     const query = searchInput.value.trim();
     if (query.length > 0) {
-      searchItems(query, dayFilter.value, e.target.value);
+      searchItems(query, dayFilter.value, e.target.value).then(displaySearchResults);
     }
   });
 
@@ -315,10 +346,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const searchHistoryList = historyModal.querySelector('#searchHistoryList');
       searchHistory.forEach(item => {
         const li = document.createElement('li');
-        li.textContent = item.query;
+        const itemContent = document.createElement('div');
+        itemContent.className = 'item-content';
+        itemContent.textContent = item.query;
+        li.appendChild(itemContent);
+        li.setAttribute('data-timestamp', item.timestamp);
         li.addEventListener('click', () => {
           searchInput.value = item.query;
-          searchItems(item.query, dayFilter.value, categoryFilter.value);
+          searchItems(item.query, dayFilter.value, categoryFilter.value).then(displaySearchResults);
           document.body.removeChild(historyModal);
         });
         searchHistoryList.appendChild(li);
@@ -344,20 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
       timeout = setTimeout(() => func.apply(this, args), wait);
     };
   }
-
-  // Auto-Update Current Time
-  function updateCurrentTime() {
-    const now = new Date();
-    const timeString = now.toLocaleString('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    });
-    monthNav.display.textContent = timeString;
-  }
-
-  // Initialize and Update Time Every Second
-  updateCurrentTime();
-  setInterval(updateCurrentTime, 1000);
 
   // Initialize Sections
   function initSections() {
@@ -401,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
           logger.error('Error deleting item:', { error: err.message });
         }
       }, 500);
-    } else if (event.target.tagName === 'LI') {
+    } else if (event.target.tagName === 'LI' || event.target.className === 'item-content') {
       li.classList.toggle('complete');
       debouncedSave();
     }
@@ -537,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize
   console.log('Initial setup starting...');
   updateTimeDisplay();
+  startTimeUpdate();
   initSections();
   loadData();
 });

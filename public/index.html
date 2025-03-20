@@ -7,50 +7,96 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="currentTime"></div>
-  <select id="dayFilter">
-    <option value="all">All Days</option>
-    <option value="monday">Monday</option>
-    <option value="tuesday">Tuesday</option>
-    <!-- Add other days -->
-  </select>
-  <select id="categoryFilter">
-    <option value="all">All Categories</option>
-    <option value="breakfast">Breakfast</option>
-    <option value="lunch">Lunch</option>
-    <!-- Add other categories -->
-  </select>
-  <input id="searchInput" type="text" placeholder="Search items...">
-  <button id="historyBtn">Search History</button>
-  <div id="dayContent">
-    <div class="meal-section" data-meal="breakfast">
-      <h2>Breakfast</h2>
-      <button class="add-meal">+</button>
-      <input class="meal-input" type="text" placeholder="Add meal...">
-      <ul class="meal-list" data-meal="breakfast"></ul>
+  <div class="app-header">
+    <h1 class="app-title">Food Tracker</h1>
+    <div class="search-placeholder">
+      <select class="day-filter" id="dayFilter">
+        <option value="all">All Days</option>
+        <option value="monday">Monday</option>
+        <option value="tuesday">Tuesday</option>
+        <option value="wednesday">Wednesday</option>
+        <option value="thursday">Thursday</option>
+        <option value="friday">Friday</option>
+        <option value="saturday">Saturday</option>
+        <option value="sunday">Sunday</option>
+      </select>
+      <select class="category-filter" id="categoryFilter">
+        <option value="all">All Categories</option>
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner">Dinner</option>
+        <option value="snacks">Snacks</option>
+        <option value="physical-activity">Physical Activity</option>
+      </select>
+      <input id="searchInput" type="text" class="search-input" placeholder="Search items...">
+      <ul class="autocomplete-suggestions"></ul>
+      <button class="history-btn" id="historyBtn">Search History</button>
     </div>
-    <div class="meal-section" data-meal="lunch">
-      <h2>Lunch</h2>
-      <button class="add-meal">+</button>
-      <input class="meal-input" type="text" placeholder="Add meal...">
-      <ul class="meal-list" data-meal="lunch"></ul>
-    </div>
-    <div class="activity-section">
-      <h2>Activities</h2>
-      <button class="add-activity">+</button>
-      <input class="meal-input" type="text" placeholder="Add activity...">
-      <ul class="meal-list"></ul>
+    <div class="current-time"></div>
+  </div>
+  <div class="dashboard">
+    <div class="main-content">
+      <div class="analytics">
+        <h2>Daily Analytics</h2>
+        <div id="mealTotals"></div>
+      </div>
+      <div class="grid-container" id="dayContent">
+        <div class="meal-section" data-meal="breakfast">
+          <h3>Breakfast</h3>
+          <div class="input-group">
+            <input class="meal-input" type="text" placeholder="Add meal...">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="breakfast"></ul>
+        </div>
+        <div class="meal-section" data-meal="lunch">
+          <h3>Lunch</h3>
+          <div class="input-group">
+            <input class="meal-input" type="text" placeholder="Add meal...">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="lunch"></ul>
+        </div>
+        <div class="meal-section" data-meal="dinner">
+          <h3>Dinner</h3>
+          <div class="input-group">
+            <input class="meal-input" type="text" placeholder="Add meal...">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="dinner"></ul>
+        </div>
+        <div class="meal-section" data-meal="snacks">
+          <h3>Snacks</h3>
+          <div class="input-group">
+            <input class="meal-input" type="text" placeholder="Add meal...">
+            <button class="add-meal">+</button>
+          </div>
+          <ul class="meal-list" data-meal="snacks"></ul>
+        </div>
+        <div class="activity-section">
+          <h3>Activities</h3>
+          <div class="input-group">
+            <input class="meal-input" type="text" placeholder="Add activity...">
+            <button class="add-activity">+</button>
+          </div>
+          <ul class="meal-list"></ul>
+        </div>
+        <div class="notes-section">
+          <h3>Notes</h3>
+          <textarea id="notesInput" placeholder="Add notes..."></textarea>
+        </div>
+      </div>
+      <div class="totals"></div>
+      <div class="button-group">
+        <button id="saveNotes">Save Notes</button>
+        <button id="saveData">Save Data</button>
+        <button id="loadData">Load Data</button>
+      </div>
     </div>
   </div>
-  <textarea id="notesInput" placeholder="Add notes..."></textarea>
-  <button id="saveNotes">Save Notes</button>
-  <button id="saveData">Save Data</button>
-  <button id="loadData">Load Data</button>
-  <div id="mealTotals"></div>
-  <div class="totals"></div>
   <div id="searchModal" class="modal">
     <div class="modal-content">
-      <span class="close-modal">&times;</span>
+      <span class="close-modal">×</span>
       <ul id="searchResults"></ul>
     </div>
   </div>
