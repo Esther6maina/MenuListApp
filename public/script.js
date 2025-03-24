@@ -7,7 +7,45 @@ const validate = {
   isValidCategory: (value) => ['all', 'breakfast', 'lunch', 'dinner', 'snacks', 'physical-activity'].includes(value.toLowerCase()),
 };
 
-function createListItem(text, timestamp = null, calories = 0, duration = 0, document = global.document) {
+// Fetch nutritional data from Nutritionix via backend
+async function fetchNutritionalData(query) {
+  try {
+    const response = await fetch('/api/nutrition', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    if (!response.ok) throw new Error('Failed to fetch nutritional data');
+    const data = await response.json();
+    return data.foods && data.foods.length > 0 ? data.foods[0].nf_calories || 0 : 0;
+  } catch (err) {
+    console.error('Error fetching nutritional data:', err);
+    return 0;
+  }
+}
+
+// Fetch activity data from Nutritionix via backend
+async function fetchActivityData(query) {
+  try {
+    const response = await fetch('/api/activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    if (!response.ok) throw new Error('Failed to fetch activity data');
+    const data = await response.json();
+    return {
+      calories: data.exercises && data.exercises.length > 0 ? data.exercises[0].nf_calories || 0 : 0,
+      duration: data.exercises && data.exercises.length > 0 ? data.exercises[0].duration_min || 0 : 0
+    };
+  } catch (err) {
+    console.error('Error fetching activity data:', err);
+    return { calories: 0, duration: 0 };
+  }
+}
+
+// Create a list item with nutritional or activity data
+async function createListItem(text, timestamp = null, calories = 0, duration = 0, document = global.document) {
   const li = document.createElement('li');
   const time = timestamp ? new Date(timestamp) : new Date();
   const timeString = time.toLocaleString('en-US', {
@@ -17,35 +55,39 @@ function createListItem(text, timestamp = null, calories = 0, duration = 0, docu
     minute: 'numeric',
     hour12: true
   });
-  
+
   const itemContent = document.createElement('div');
   itemContent.className = 'item-content';
   itemContent.textContent = text;
-  
+
   const deleteBtn = document.createElement('button');
   deleteBtn.textContent = 'Delete';
   deleteBtn.className = 'delete-btn';
   itemContent.appendChild(deleteBtn);
-  
+
   li.appendChild(itemContent);
   li.setAttribute('data-timestamp', timeString);
   li.dataset.calories = calories || 0;
   li.dataset.duration = duration || 0;
 
-  if (!li.closest('.activity-section')) {
-    const calorieInput = typeof prompt === 'function' ? prompt('Enter calories for this item (optional):') : null;
-    if (calorieInput) li.dataset.calories = parseInt(calorieInput) || 0;
+  // Fetch nutritional data for meals
+  if (!li.closest('.activity-section') && text) {
+    const calories = await fetchNutritionalData(text);
+    li.dataset.calories = calories;
   }
 
-  if (li.closest('.activity-section')) {
-    const durationInput = typeof prompt === 'function' ? prompt('Enter duration in minutes (optional):') : null;
-    if (durationInput) li.dataset.duration = parseInt(durationInput) || 0;
+  // Fetch activity data for activities
+  if (li.closest('.activity-section') && text) {
+    const { calories, duration } = await fetchActivityData(text);
+    li.dataset.calories = calories;
+    li.dataset.duration = duration;
   }
 
   setTimeout(() => li.classList.add('fadeIn'), 10);
   return li;
 }
 
+// Get data from a list
 function getListData(list, document = global.document) {
   const items = [];
   if (list) {
@@ -55,15 +97,16 @@ function getListData(list, document = global.document) {
         text: text || '',
         timestamp: li.getAttribute('data-timestamp') || '',
         completed: li.classList.contains('complete'),
-        calories: parseInt(li.dataset.calories) || 0,
-        duration: parseInt(li.dataset.duration) || 0
+        calories: parseFloat(li.dataset.calories) || 0,
+        duration: parseFloat(li.dataset.duration) || 0
       });
     });
   }
   return items;
 }
 
-function handleAddItem(input, list, section, logger = console) {
+// Handle adding an item
+async function handleAddItem(input, list, section, logger = console) {
   logger.info('Add button clicked!');
   const text = input.value.trim();
   logger.info('Input text:', { text });
@@ -90,7 +133,7 @@ function handleAddItem(input, list, section, logger = console) {
   }
 
   logger.info('Creating and adding item:', { text });
-  const li = createListItem(text, null, 0, section.querySelector('.add-activity') ? 0 : null);
+  const li = await createListItem(text);
   list.appendChild(li);
   input.value = '';
   debouncedSave();
@@ -130,10 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('searchInput');
   const dayFilter = document.getElementById('dayFilter');
   const categoryFilter = document.getElementById('categoryFilter');
-  const searchModal = document.getElementById('searchModal');
-  const closeModal = document.querySelector('.close-modal');
+  const searchResultsContainer = document.getElementById('searchResultsContainer');
   const searchResults = document.getElementById('searchResults');
   const autocompleteSuggestions = document.querySelector('.autocomplete-suggestions');
+  const searchHistorySuggestions = document.querySelector('.search-history-suggestions');
   const historyBtn = document.getElementById('historyBtn');
 
   console.log('DOM fully loaded, initializing...');
@@ -151,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     allItems = [];
     try {
       for (const day of days) {
-        const response = await fetch(`/api/search?query=.*&day=${day}`); // Use a wildcard query to fetch all items
+        const response = await fetch(`/api/search?query=.*&day=${day}`);
         if (!response.ok) throw new Error(`Failed to fetch items for day ${day}`);
         const items = await response.json();
         allItems.push(...items);
@@ -163,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Autocomplete Functionality
   function showAutocomplete(query) {
+    searchHistorySuggestions.style.display = 'none';
     autocompleteSuggestions.style.display = 'block';
     const suggestions = allItems
       .filter(item => item.text.toLowerCase().includes(query.toLowerCase()))
@@ -187,12 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hide Autocomplete on Blur or Outside Click
   searchInput.addEventListener('blur', () => {
-    setTimeout(() => autocompleteSuggestions.style.display = 'none', 200);
+    setTimeout(() => {
+      autocompleteSuggestions.style.display = 'none';
+      searchHistorySuggestions.style.display = 'none';
+    }, 200);
   });
 
   window.addEventListener('click', (event) => {
-    if (!searchInput.contains(event.target) && !autocompleteSuggestions.contains(event.target)) {
+    if (!searchInput.contains(event.target) && !autocompleteSuggestions.contains(event.target) && !searchHistorySuggestions.contains(event.target)) {
       autocompleteSuggestions.style.display = 'none';
+      searchHistorySuggestions.style.display = 'none';
     }
   });
 
@@ -211,19 +259,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       return data;
     } catch (err) {
-      console.error('Error fetching items for autocomplete:', err);
+      console.error('Error fetching items for search:', err);
       return [];
     }
   }
 
-  // Display Search Results in Modal with Delete Functionality
-  function displaySearchResults(results) {
+  // Display Search Results Inline
+  async function displaySearchResults(results) {
     searchResults.innerHTML = '';
     if (results.length === 0) {
       searchResults.innerHTML = '<li>No results found.</li>';
     } else {
-      results.forEach(item => {
-        const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
+      for (const item of results) {
+        const li = await createListItem(item.text, item.timestamp, item.calories, item.duration);
         li.classList.add('search-result');
         li.dataset.id = item.id;
         li.dataset.day = item.day;
@@ -235,9 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.addEventListener('click', () => {
           deleteSearchItem(li, item.id, item.day, item.type, item.category);
         });
-      });
+      }
     }
-    searchModal.style.display = 'block';
+    searchResultsContainer.style.display = 'block';
   }
 
   // Delete Item from Search Results
@@ -247,6 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(endpoint, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete item');
       li.remove();
+      if (searchResults.children.length === 0) {
+        searchResultsContainer.style.display = 'none';
+      }
       updateTotals();
       updateAnalytics();
       updateAllItems();
@@ -254,18 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
       logger.error('Error deleting item:', { id, day, type, category, error: err.message });
     }
   }
-
-  // Close Modal
-  closeModal.addEventListener('click', () => {
-    searchModal.style.display = 'none';
-  });
-
-  // Close Modal on Outside Click
-  window.addEventListener('click', (event) => {
-    if (event.target === searchModal) {
-      searchModal.style.display = 'none';
-    }
-  });
 
   // Search Input Event Listener with Autocomplete and Filters
   searchInput.addEventListener('input', (e) => {
@@ -275,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Search query cannot be empty or just whitespace.');
       searchInput.value = '';
       autocompleteSuggestions.style.display = 'none';
-      searchModal.style.display = 'none';
+      searchResultsContainer.style.display = 'none';
       searchResults.innerHTML = '';
       logger.warn('Invalid search query attempted:', { query });
       return;
@@ -283,14 +322,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (query.length > 0) {
       logger.info('Showing autocomplete for query:', { query });
       showAutocomplete(query);
-      logger.info('Searching items with filters:', { query, day: dayFilter.value, category: categoryFilter.value });
-      searchItems(query, dayFilter.value, categoryFilter.value).then(displaySearchResults);
-      saveSearch(query);
     } else {
       logger.info('Clearing search UI due to empty query');
       autocompleteSuggestions.style.display = 'none';
-      searchModal.style.display = 'none';
+      searchResultsContainer.style.display = 'none';
       searchResults.innerHTML = '';
+    }
+  });
+
+  // Search on Enter
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const query = searchInput.value.trim();
+      if (query.length > 0) {
+        searchItems(query, dayFilter.value, categoryFilter.value).then(displaySearchResults);
+        saveSearch(query);
+        autocompleteSuggestions.style.display = 'none';
+      }
     }
   });
 
@@ -332,38 +380,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('/api/search-history');
       const searchHistory = await response.json();
 
-      const historyModal = document.createElement('div');
-      historyModal.className = 'modal';
-      historyModal.innerHTML = `
-        <div class="modal-content">
-          <span class="close-modal">×</span>
-          <h2>Search History</h2>
-          <ul id="searchHistoryList" class="meal-list"></ul>
-        </div>
-      `;
-      document.body.appendChild(historyModal);
+      autocompleteSuggestions.style.display = 'none';
+      searchHistorySuggestions.style.display = 'block';
+      searchHistorySuggestions.innerHTML = '';
 
-      const searchHistoryList = historyModal.querySelector('#searchHistoryList');
-      searchHistory.forEach(item => {
-        const li = document.createElement('li');
-        const itemContent = document.createElement('div');
-        itemContent.className = 'item-content';
-        itemContent.textContent = item.query;
-        li.appendChild(itemContent);
-        li.setAttribute('data-timestamp', item.timestamp);
-        li.addEventListener('click', () => {
-          searchInput.value = item.query;
-          searchItems(item.query, dayFilter.value, categoryFilter.value).then(displaySearchResults);
-          document.body.removeChild(historyModal);
+      if (searchHistory.length === 0) {
+        searchHistorySuggestions.innerHTML = '<li>No search history</li>';
+      } else {
+        searchHistory.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.query;
+          li.addEventListener('click', () => {
+            searchInput.value = item.query;
+            searchItems(item.query, dayFilter.value, categoryFilter.value).then(displaySearchResults);
+            searchHistorySuggestions.style.display = 'none';
+          });
+          searchHistorySuggestions.appendChild(li);
         });
-        searchHistoryList.appendChild(li);
-      });
-
-      const closeHistoryModal = historyModal.querySelector('.close-modal');
-      closeHistoryModal.addEventListener('click', () => document.body.removeChild(historyModal));
-      window.addEventListener('click', (event) => {
-        if (event.target === historyModal) document.body.removeChild(historyModal);
-      });
+      }
     } catch (err) {
       logger.error('Error fetching search history:', { error: err.message });
     }
@@ -395,8 +429,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       console.log('Found add button:', addBtn);
 
+      // Remove any existing listeners to prevent duplicates
       addBtn.removeEventListener('click', handleAddItem);
-      addBtn.addEventListener('click', () => handleAddItem(input, list, section, logger));
+      addBtn.addEventListener('click', () => {
+        console.log('Add button clicked for section:', section);
+        handleAddItem(input, list, section, logger);
+      });
       list.removeEventListener('click', handleListClick);
       list.addEventListener('click', handleListClick);
     });
@@ -518,8 +556,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = document.querySelector(`.meal-list[data-meal="${mealType}"]`);
         if (list) {
           logger.info(`Loading meals for ${mealType}:`, data.meals[mealType]);
-          data.meals[mealType].forEach(item => {
-            const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
+          data.meals[mealType].forEach(async item => {
+            const li = await createListItem(item.text, item.timestamp, item.calories, item.duration);
             li.dataset.id = item.id;
             if (item.completed) li.classList.add('complete');
             list.appendChild(li);
@@ -532,8 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const activityList = document.querySelector('.activity-section .meal-list');
       if (activityList) {
         logger.info('Loading activities:', data.activity);
-        data.activity.forEach(item => {
-          const li = createListItem(item.text, item.timestamp, item.calories, item.duration);
+        data.activity.forEach(async item => {
+          const li = await createListItem(item.text, item.timestamp, item.calories, item.duration);
           li.dataset.id = item.id;
           if (item.completed) li.classList.add('complete');
           activityList.appendChild(li);

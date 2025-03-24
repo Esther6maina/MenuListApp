@@ -1,9 +1,12 @@
 // server.js
+require('dotenv').config(); // Load environment variables from .env file
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const winston = require('winston');
+const fetch = require('node-fetch'); // For making HTTP requests to Nutritionix API
 const db = require('./database.js');
-const winston = require('winston'); // For logging
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +27,7 @@ const logger = winston.createLogger({
 // Middleware
 app.use(cors()); // Allow cross-origin requests
 app.use(express.json()); // Parse JSON bodies
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files (index.html, style.css, script.js)
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files
 app.use((req, res, next) => {
   logger.info('Incoming request:', {
     method: req.method,
@@ -34,6 +37,16 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+// Nutritionix API credentials from environment variables
+const NUTRITIONIX_APP_ID = process.env.NUTRITIONIX_APP_ID;
+const NUTRITIONIX_API_KEY = process.env.NUTRITIONIX_API_KEY;
+
+// Check if API credentials are set
+if (!NUTRITIONIX_APP_ID || !NUTRITIONIX_API_KEY) {
+  logger.error('Nutritionix API credentials are missing. Please set NUTRITIONIX_APP_ID and NUTRITIONIX_API_KEY in the .env file.');
+  process.exit(1);
+}
 
 // API Endpoints
 
@@ -45,25 +58,24 @@ app.get('/api/data/:day', async (req, res) => {
       return res.status(400).json({ error: 'Invalid day parameter' });
     }
 
-    const responseData = { meals: {}, activity: [], notes: '' };
+    const [meals, activities, notes] = await Promise.all([
+      db.getMealsByDay(day),
+      db.getActivitiesByDay(day),
+      db.getNotesByDay(day),
+    ]);
 
-    // Get meals
-    const meals = await db.getMealsByDay(day);
-    responseData.meals = {
-      breakfast: meals.filter(m => m.meal_type === 'breakfast'),
-      lunch: meals.filter(m => m.meal_type === 'lunch'),
-      dinner: meals.filter(m => m.meal_type === 'dinner'),
-      snacks: meals.filter(m => m.meal_type === 'snacks'),
+    const mealsByType = {
+      breakfast: meals.filter(meal => meal.meal_type === 'breakfast'),
+      lunch: meals.filter(meal => meal.meal_type === 'lunch'),
+      dinner: meals.filter(meal => meal.meal_type === 'dinner'),
+      snacks: meals.filter(meal => meal.meal_type === 'snacks'),
     };
 
-    // Get activities
-    responseData.activity = await db.getActivitiesByDay(day);
-
-    // Get notes
-    const notes = await db.getNotesByDay(day);
-    responseData.notes = notes || '';
-
-    res.json(responseData);
+    res.json({
+      meals: mealsByType,
+      activity: activities,
+      notes: notes ? notes.content : '',
+    });
   } catch (err) {
     logger.error('Error fetching data for day:', { day: req.params.day, error: err.message });
     res.status(500).json({ error: 'Failed to fetch data', details: err.message });
@@ -117,7 +129,7 @@ app.post('/api/data/:day', async (req, res) => {
 
     // Add new activities
     const activityPromises = activity.map(act => {
-      if (!act.text || typeof act.duration !== 'number') {
+      if (!act.text || typeof act.duration !== 'number' || typeof act.calories !== 'number') {
         logger.warn('Skipping invalid activity:', { act, day });
         return Promise.resolve();
       }
@@ -225,7 +237,67 @@ app.post('/api/search-history', async (req, res) => {
   }
 });
 
-// Fallback route to serve index.html for client-side routing (if needed)
+// Fetch nutritional data from Nutritionix
+app.post('/api/nutrition', async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Query must be a non-empty string' });
+    }
+
+    const response = await fetch('https://trackapi.nutritionix.com/v2/natural/nutrients', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-id': NUTRITIONIX_APP_ID,
+        'x-app-key': NUTRITIONIX_API_KEY,
+      },
+      body: JSON.stringify({ query })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Nutritionix API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    logger.error('Error fetching nutritional data:', { query, error: err.message });
+    res.status(500).json({ error: 'Failed to fetch nutritional data', details: err.message });
+  }
+});
+
+// Fetch activity calorie burn from Nutritionix
+app.post('/api/activity', async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Query must be a non-empty string' });
+    }
+
+    const response = await fetch('https://trackapi.nutritionix.com/v2/natural/exercise', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-id': NUTRITIONIX_APP_ID,
+        'x-app-key': NUTRITIONIX_API_KEY,
+      },
+      body: JSON.stringify({ query })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Nutritionix API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    logger.error('Error fetching activity data:', { query, error: err.message });
+    res.status(500).json({ error: 'Failed to fetch activity data', details: err.message });
+  }
+});
+
+// Fallback route to serve index.html for client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
