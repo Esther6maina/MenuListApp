@@ -1,0 +1,183 @@
+:root {
+  --primary-green: #28a745;
+  --primary-black: #333333;
+  --primary-white: #ffffff;
+  --primary-red: #dc3545;
+  --bg-color: #f5f7fa;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--primary-black);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Icon Buttons */
+.icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 8px;
+  transition: transform 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.2);
+}
+
+.add-btn {
+  color: var(--primary-green);
+}
+
+.edit-btn {
+  color: var(--primary-black);
+}
+
+.delete-btn {
+  color: var(--primary-red);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+/* Analytics Section */
+.analytics {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.analytics h3 {
+  color: #1a73e8;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+/* Grid Layout */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.meal-section, .activity-section, .hydration-section, .fasting-section {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.meal-section:hover, .activity-section:hover, .hydration-section:hover, .fasting-section:hover {
+  transform: translateY(-2px);
+}
+
+.meal-section h3, .activity-section h3, .hydration-section h3, .fasting-section h3 {
+  color: #1a73e8;
+  margin-bottom: 20px;
+}
+
+/* Lists */
+.meal-list, .water-list, .activity-list, .fasting-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.meal-list li, .water-list li, .activity-list li, .fasting-list li {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  transition: var(--transition);
+  position: relative;
+  min-height: 60px;
+}
+
+.meal-list li .item-content, .water-list li .item-content, .activity-list li .item-content, .fasting-list li .item-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.meal-list li .timestamp, .water-list li .timestamp, .activity-list li .timestamp, .fasting-list li .timestamp {
+  font-size: 0.7rem;
+  color: #888;
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+}
+
+.meal-list li:hover, .water-list li:hover, .activity-list li:hover, .fasting-list li:hover {
+  background: #e9ecef;
+}
+
+/* Totals */
+.totals {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin: 30px 0;
+  text-align: center;
+  color: #1a73e8;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Complete State */
+.complete {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Inputs and Selects */
+input, select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-right: 10px;
+  width: 150px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.meal-list li, .water-list li, .activity-list li, .fasting-list li {
+  animation: fadeIn 0.5s ease-out;
+}

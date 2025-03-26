@@ -1,0 +1,419 @@
+:root {
+  --primary-green: #28a745;
+  --primary-black: #333333;
+  --primary-white: #ffffff;
+  --primary-red: #dc3545;
+  --bg-color: #f5f7fa;
+  --card-bg: #ffffff;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--primary-black);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Icon Buttons */
+.icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 8px;
+  transition: transform 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.2);
+}
+
+.add-btn {
+  color: var(--primary-green);
+}
+
+.edit-btn {
+  color: var(--primary-black);
+}
+
+.delete-btn {
+  color: var(--primary-red);
+}
+
+/* Updated App Header to Match Edamam */
+.app-header {
+  background: var(--primary-white);
+  padding: 15px 30px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 20;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--primary-green);
+}
+
+.logo i {
+  font-size: 1.2rem;
+  color: var(--primary-black);
+}
+
+/* Navigation Links */
+.nav-links {
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--primary-black);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.nav-links a:hover {
+  color: var(--primary-green);
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.action-btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.signup-btn {
+  background: var(--primary-green);
+  color: var(--primary-white);
+}
+
+.signup-btn:hover {
+  background: #218838;
+}
+
+.api-btn {
+  background: transparent;
+  color: var(--primary-black);
+  border: 1px solid var(--primary-black);
+}
+
+.api-btn:hover {
+  background: #f8f9fa;
+}
+
+.header-actions a {
+  text-decoration: none;
+  color: var(--primary-black);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.header-actions a:hover {
+  color: var(--primary-green);
+}
+
+.menu-icon {
+  font-size: 1.2rem;
+  color: var(--primary-black);
+  cursor: pointer;
+}
+
+/* Dashboard Layout */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  padding-top: 70px; /* Adjusted for new header height */
+}
+
+.main-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  max-height: calc(100vh - 70px - 40px);
+  transition: none;
+}
+
+/* Analytics Section */
+.analytics {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.analytics h2 {
+  color: #1a73e8;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+#mealTotals {
+  color: var(--primary-black);
+  font-size: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* Grid Layout */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  transition: opacity 0.3s ease;
+}
+
+.grid-container.fade {
+  opacity: 0;
+}
+
+.meal-section, .activity-section, .notes-section {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.meal-section:hover, .activity-section:hover, .notes-section:hover {
+  transform: translateY(-2px);
+}
+
+.meal-section h3, .activity-section h3, .notes-section h3 {
+  color: #1a73e8;
+  margin-bottom: 20px;
+}
+
+/* Lists */
+.meal-list, .water-list, .activity-list, .fasting-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.meal-list li, .water-list li, .activity-list li, .fasting-list li {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  transition: var(--transition);
+  position: relative;
+  min-height: 60px;
+}
+
+.meal-list li .item-content, .water-list li .item-content, .activity-list li .item-content, .fasting-list li .item-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.meal-list li:hover, .water-list li:hover, .activity-list li:hover, .fasting-list li:hover {
+  background: #e9ecef;
+}
+
+.meal-list li .timestamp, .water-list li .timestamp, .activity-list li .timestamp, .fasting-list li .timestamp {
+  font-size: 0.7rem;
+  color: #888;
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+}
+
+/* Hydration Section */
+.hydration-section, .activity-section, .fasting-section {
+  background: var(--card-bg);
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+}
+
+.hydration-section h3, .activity-section h3, .fasting-section h3 {
+  color: #1a73e8;
+  margin-bottom: 20px;
+}
+
+#water-amount, #workout-name {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-right: 10px;
+  width: 150px;
+}
+
+#day {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-right: 10px;
+}
+
+/* Totals */
+.totals {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin: 30px 0;
+  text-align: center;
+  color: #1a73e8;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Complete State */
+.complete {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Notes */
+#notesInput {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  resize: vertical;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+#saveData, #loadData {
+  background: #1a73e8;
+  color: var(--primary-white);
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#saveData:hover, #loadData:hover {
+  background: #1557b0;
+  animation: pulse 0.3s ease-in-out;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.meal-list li, .water-list li, .activity-list li, .fasting-list li {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.analytics, .totals {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 20px;
+  }
+
+  .nav-links {
+    display: none; /* Hide nav links on smaller screens */
+  }
+
+  .header-actions .action-btn:not(.signup-btn) {
+    display: none; /* Hide other buttons except signup */
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    flex-direction: column;
+  }
+  .app-header {
+    position: static;
+    width: 100%;
+    padding: 10px 15px;
+  }
+  .dashboard {
+    padding-top: 60px;
+  }
+  .main-content {
+    padding: 10px;
+    max-height: calc(100vh - 60px - 20px);
+  }
+}
