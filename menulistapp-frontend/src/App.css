@@ -1,7 +1,7 @@
 .app {
   font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
-  background-color: #f5f7fa;
-  color: #333333;
+  background-color: #1A3C34; /* Match the deep green background */
+  color: #ffffff; /* White text */
   line-height: 1.6;
   min-height: 100vh;
 }

@@ -3,9 +3,9 @@
   --primary-black: #333333;
   --primary-white: #ffffff;
   --primary-red: #dc3545;
-  --bg-color: #f5f7fa;
+  --bg-color: #1A3C34; /* Changed to deep green */
   --card-bg: #ffffff;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow: 0 4px 6px rgba(255, 255, 255, 0.1); /* Adjusted shadow for deep green background */
   --transition: all 0.3s ease;
 }
 
@@ -18,7 +18,7 @@
 body {
   font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
   background-color: var(--bg-color);
-  color: var(--primary-black);
+  color: var(--primary-white); /* White text for readability */
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -42,7 +42,7 @@ body {
 }
 
 .edit-btn {
-  color: var(--primary-black);
+  color: var(--primary-white);
 }
 
 .delete-btn {
@@ -180,4 +180,43 @@ input, select {
 
 .meal-list li, .water-list li, .activity-list li, .fasting-list li {
   animation: fadeIn 0.5s ease-out;
+}
+
+/* Add Meal Form */
+.add-meal-form {
+  background-color: #28a745; /* Green background */
+  color: #ffffff; /* White text */
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  box-shadow: var(--shadow);
+}
+
+.add-meal-form label {
+  margin-right: 10px;
+}
+
+.add-meal-form input {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 5px 0;
+  width: 200px;
+}
+
+.add-meal-form button {
+  background-color: #1a73e8;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: var(--transition);
+}
+
+.add-meal-form button:hover {
+  background-color: #1557b0;
 }
