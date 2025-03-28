@@ -3,9 +3,9 @@
   --primary-black: #333333;
   --primary-white: #ffffff;
   --primary-red: #dc3545;
-  --bg-color: #1A3C34; /* Changed to deep green */
-  --card-bg: #ffffff;
-  --shadow: 0 4px 6px rgba(255, 255, 255, 0.1); /* Adjusted shadow for deep green background */
+  --bg-color: #1A3C34; /* Deep green background */
+  --card-bg: #2E4A3F; /* Slightly lighter green for cards */
+  --shadow: 0 4px 6px rgba(255, 255, 255, 0.1); /* White shadow for depth */
   --transition: all 0.3s ease;
 }
 
@@ -67,7 +67,7 @@ body {
 }
 
 .analytics h3 {
-  color: #1a73e8;
+  color: var(--primary-green); /* Vibrant green for headings */
   margin-bottom: 15px;
   font-size: 1.2rem;
   font-weight: 500;
@@ -93,7 +93,7 @@ body {
 }
 
 .meal-section h3, .activity-section h3, .hydration-section h3, .fasting-section h3 {
-  color: #1a73e8;
+  color: var(--primary-green);
   margin-bottom: 20px;
 }
 
@@ -110,7 +110,7 @@ body {
   justify-content: flex-start;
   align-items: flex-start;
   padding: 15px;
-  background: #f8f9fa;
+  background: #3b5a50; /* Slightly darker green for list items */
   border-radius: 6px;
   margin-bottom: 15px;
   transition: var(--transition);
@@ -128,14 +128,14 @@ body {
 
 .meal-list li .timestamp, .water-list li .timestamp, .activity-list li .timestamp, .fasting-list li .timestamp {
   font-size: 0.7rem;
-  color: #888;
+  color: #d1d5db; /* Light gray for timestamps */
   position: absolute;
   bottom: 8px;
   left: 12px;
 }
 
 .meal-list li:hover, .water-list li:hover, .activity-list li:hover, .fasting-list li:hover {
-  background: #e9ecef;
+  background: #4a6b5f; /* Lighter green on hover */
 }
 
 /* Totals */
@@ -146,7 +146,7 @@ body {
   box-shadow: var(--shadow);
   margin: 30px 0;
   text-align: center;
-  color: #1a73e8;
+  color: var(--primary-green);
   font-size: 1.1rem;
   font-weight: 500;
 }
