@@ -1,47 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const Hydration = () => {
-  const [day, setDay] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
   const [water, setWater] = useState([]);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
 
-  // Fetch water intake data for the selected day
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('Please log in to view your data.');
-          return;
-        }
-
-        const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setWater(response.data.water || []);
-        setError('');
-      } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch hydration data');
+  const fetchData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in to view your data.');
+        return;
       }
-    };
 
+      const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setWater(response.data.water || []);
+      setError('');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to fetch water data');
+    }
+  }, [day]);
+
+  useEffect(() => {
     fetchData();
-  }, [day]); // Dependency array only includes 'day'
+  }, [fetchData]);
 
-  const handleDayChange = (e) => {
-    setDay(e.target.value);
-  };
-
-  // Handle form submission to add water intake
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validation
-    const amountNum = parseInt(amount);
-    if (isNaN(amountNum) || amountNum <= 0 || amountNum > 5000) {
-      setError('Water amount must be a positive number and less than 5000 ml.');
+    if (!amount) {
+      setError('Please enter an amount.');
       return;
     }
 
@@ -53,12 +44,12 @@ const Hydration = () => {
       }
 
       await axios.post(
-        'http://localhost:3000/api/water',
-        { amount: amountNum },
+        'http://localhost:3000/api/data',
+        { water: [{ amount: Number(amount), timestamp: new Date().toISOString() }] },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setAmount(''); // Clear the form
-      fetchData(); // Refresh the data
+      setAmount('');
+      fetchData(); // This should now work correctly
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add water intake');
     }
@@ -69,7 +60,7 @@ const Hydration = () => {
       <h2>Hydration</h2>
       <div>
         <label>Select Day: </label>
-        <input type="date" value={day} onChange={handleDayChange} />
+        <input type="date" value={day} onChange={(e) => setDay(e.target.value)} />
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
@@ -87,7 +78,7 @@ const Hydration = () => {
         </ul>
       </div>
 
-      <form onSubmit={handleSubmit} className="add-meal-form">
+      <form onSubmit={handleSubmit} className="add-water-form">
         <h3>Add Water Intake</h3>
         <div>
           <label>Amount (ml):</label>
@@ -95,6 +86,7 @@ const Hydration = () => {
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            placeholder="e.g., 500"
             required
           />
         </div>

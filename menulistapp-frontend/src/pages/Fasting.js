@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const Fasting = () => {
-  const [day, setDay] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
   const [fasting, setFasting] = useState([]);
-  const [duration, setDuration] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
   const [error, setError] = useState('');
 
-  // Fetch fasting data for the selected day
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -24,43 +24,36 @@ const Fasting = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch fasting data');
     }
-  };
+  }, [day]); // `day` is a dependency of `fetchData`
 
   useEffect(() => {
     fetchData();
-  }, [day]);
+  }, [fetchData]); // Add `fetchData` to the dependency array
 
-  const handleDayChange = (e) => {
-    setDay(e.target.value);
-  };
-
-  // Handle form submission to add a fasting period
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validation
-    const durationNum = parseInt(duration);
-    if (isNaN(durationNum) || durationNum <= 0 || durationNum > 48) {
-      setError('Fasting duration must be a positive number and less than 48 hours.');
+    if (!start || !end) {
+      setError('Please enter start and end times.');
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Please log in to add a fasting period.');
+        setError('Please log in to add fasting data.');
         return;
       }
 
       await axios.post(
-        'http://localhost:3000/api/fasting',
-        { duration: durationNum },
+        'http://localhost:3000/api/data',
+        { fasting: [{ start, end, timestamp: new Date().toISOString() }] },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setDuration(''); // Clear the form
-      fetchData(); // Refresh the data
+      setStart('');
+      setEnd('');
+      fetchData();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to add fasting period');
+      setError(err.response?.data?.error || 'Failed to add fasting data');
     }
   };
 
@@ -69,36 +62,46 @@ const Fasting = () => {
       <h2>Fasting</h2>
       <div>
         <label>Select Day: </label>
-        <input type="date" value={day} onChange={handleDayChange} />
+        <input type="date" value={day} onChange={(e) => setDay(e.target.value)} />
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <div className="fasting-section">
-        <h3>Fasting Logs</h3>
+        <h3>Fasting Periods</h3>
         <ul className="fasting-list">
-          {fasting.map((fast, index) => (
+          {fasting.map((period, index) => (
             <li key={index}>
               <div className="item-content">
-                <span>{fast.duration} hours</span>
+                <span>Start: {new Date(period.start).toLocaleTimeString()}</span>
+                <span>End: {new Date(period.end).toLocaleTimeString()}</span>
               </div>
-              <span className="timestamp">{new Date(fast.timestamp).toLocaleTimeString()}</span>
+              <span className="timestamp">{new Date(period.timestamp).toLocaleTimeString()}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <form onSubmit={handleSubmit} className="add-meal-form">
+      <form onSubmit={handleSubmit} className="add-fasting-form">
         <h3>Add Fasting Period</h3>
         <div>
-          <label>Duration (hours):</label>
+          <label>Start Time:</label>
           <input
-            type="number"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
+            type="datetime-local"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
             required
           />
         </div>
-        <button type="submit">Add Fasting</button>
+        <div>
+          <label>End Time:</label>
+          <input
+            type="datetime-local"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Add Fasting Period</button>
       </form>
     </div>
   );
