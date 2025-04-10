@@ -5,6 +5,7 @@ import hydrationImage from '../assets/hydration.jpg';
 import fitnessImage from '../assets/fitness.jpg';
 import caloriesImage from '../assets/calories.jpg';
 import fastingImage from '../assets/fasting.jpg';
+import heroBackground from '../assets/hero-background.jpg'; // Added back
 import axios from 'axios';
 
 const Home = () => {
