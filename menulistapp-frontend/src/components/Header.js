@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useHistory } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom'; // Replace useHistory with useNavigate
 import './Header.css';
 
 const Header = () => {
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate(); // Use useNavigate instead of useHistory
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const token = localStorage.getItem('token');
@@ -26,7 +26,7 @@ const Header = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    history.push('/login');
+    navigate('/login'); // Use navigate instead of history.push
   };
 
   const toggleMobileMenu = () => {

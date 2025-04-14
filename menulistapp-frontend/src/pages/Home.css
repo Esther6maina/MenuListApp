@@ -586,3 +586,10 @@
     font-size: 0.9rem;
   }
 }
+.hero-buttons .cta-button.secondary:nth-child(3) {
+  background-color: #4CAF50; /* Different color for the Menu List button */
+}
+
+.hero-buttons .cta-button.secondary:nth-child(3):hover {
+  background-color: #45a049;
+}

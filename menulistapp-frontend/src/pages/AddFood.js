@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // Replace useHistory with useNavigate
 
 const AddFood = () => {
   const [description, setDescription] = useState('');
   const [calories, setCalories] = useState('');
   const [category, setCategory] = useState('Breakfast'); // Default to Breakfast
   const [error, setError] = useState('');
-  const history = useHistory();
+  const navigate = useNavigate(); // Use useNavigate instead of useHistory
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,12 +30,35 @@ const AddFood = () => {
         return;
       }
 
+      // Fetch existing data for the current day
+      const today = new Date().toISOString().split('T')[0];
+      const response = await axios.get(`http://localhost:3000/api/data/${today}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Add the new meal to the existing meals array
+      const existingData = response.data;
+      const newMeal = {
+        category,
+        description,
+        calories: caloriesNum,
+        timestamp: new Date(),
+      };
+      const updatedMeals = [...existingData.meals, newMeal];
+
+      // Update the day's data with the new meal
       await axios.post(
-        'http://localhost:3000/api/meals',
-        { description, calories: caloriesNum, category },
+        'http://localhost:3000/api/data',
+        {
+          meals: updatedMeals,
+          water: existingData.water,
+          activities: existingData.activities,
+          fasting: existingData.fasting,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      history.push('/menulist'); // Redirect to MenuList page after adding
+
+      navigate('/menulist'); // Use navigate instead of history.push
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add meal');
     }

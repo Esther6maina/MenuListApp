@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Ensure Routes is imported
 import Header from './components/Header';
 import Home from './pages/Home';
 import MenuList from './pages/MenuList';
@@ -18,17 +18,17 @@ function App() {
       <div className="app">
         <Header />
         <div className="dashboard">
-          <Switch>
-            <Route exact path="/" component={Home} />
-            <Route path="/menulist" component={MenuList} />
-            <Route path="/hydration" component={Hydration} />
-            <Route path="/fitness" component={Fitness} />
-            <Route path="/calories" component={Calories} />
-            <Route path="/fasting" component={Fasting} />
-            <Route path="/add-food" component={AddFood} />
-            <Route path="/signup" component={SignUp} />
-            <Route path="/login" component={Login} />
-          </Switch>
+          <Routes>
+            <Route exact path="/" element={<Home />} />
+            <Route path="/menulist" element={<MenuList />} />
+            <Route path="/hydration" element={<Hydration />} />
+            <Route path="/fitness" element={<Fitness />} />
+            <Route path="/calories" element={<Calories />} />
+            <Route path="/fasting" element={<Fasting />} />
+            <Route path="/add-food" element={<AddFood />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+          </Routes>
         </div>
       </div>
     </Router>
