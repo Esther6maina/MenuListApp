@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Replace useHistory with useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const AddFood = () => {
   const [description, setDescription] = useState('');
   const [calories, setCalories] = useState('');
-  const [category, setCategory] = useState('Breakfast'); // Default to Breakfast
+  const [category, setCategory] = useState('Breakfast');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // Use useNavigate instead of useHistory
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!description.trim()) {
       setError('Description cannot be empty.');
       return;
@@ -30,13 +29,11 @@ const AddFood = () => {
         return;
       }
 
-      // Fetch existing data for the current day
       const today = new Date().toISOString().split('T')[0];
-      const response = await axios.get(`http://localhost:3000/api/data/${today}`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/data/${today}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Add the new meal to the existing meals array
       const existingData = response.data;
       const newMeal = {
         category,
@@ -46,9 +43,8 @@ const AddFood = () => {
       };
       const updatedMeals = [...existingData.meals, newMeal];
 
-      // Update the day's data with the new meal
       await axios.post(
-        'http://localhost:3000/api/data',
+        `${process.env.REACT_APP_API_URL}/api/data`,
         {
           meals: updatedMeals,
           water: existingData.water,
@@ -58,7 +54,7 @@ const AddFood = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      navigate('/menulist'); // Use navigate instead of history.push
+      navigate('/menulist');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add meal');
     }
@@ -89,7 +85,7 @@ const AddFood = () => {
         </div>
         <div>
           <label>Category:</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+          <select value={category}影响 onChange={(e) => setCategory(e.target.value)} required>
             <option value="Breakfast">Breakfast</option>
             <option value="Lunch">Lunch</option>
             <option value="Dinner">Dinner</option>

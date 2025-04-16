@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const SignUp = () => {
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState(''); // Add email field back
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3000/api/register', { username, email, password });
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/register`, { username, email, password });
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.error || 'Sign up failed');
