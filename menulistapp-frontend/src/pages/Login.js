@@ -1,6 +1,4 @@
-// src/pages/Login.js
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
 
@@ -8,68 +6,61 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/login`, {
-        email,
-        password,
+      const response = await axios.post('http://localhost:3000/api/login', {
+        username: email,
+        email: email,
+        password: password,
       });
       localStorage.setItem('token', response.data.token);
-      navigate('/menulist'); // Redirect to MenuList page after login
+      window.location.href = '/menulist';
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to log in. Please try again.');
-    } finally {
-      setLoading(false);
+      setError('Failed to log in. Please try again.');
+      console.error('Login error:', err.response ? err.response.data : err.message);
     }
   };
 
   return (
     <div className="login-container">
-      <h1 className="login-title">Log In to Food Tracker</h1>
-      <form onSubmit={handleLogin} className="login-form">
+      <h2>Log In to Food Tracker</h2>
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label>Email</label>
           <input
-            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
             required
-            disabled={loading}
+            placeholder="testuser@example.com"
           />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            required
-            disabled={loading}
-          />
+          <label>Password</label>
+          <div className="password-wrapper">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <span
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </span>
+          </div>
         </div>
         {error && <p className="error-message">{error}</p>}
-        <button type="submit" disabled={loading}>
-          {loading ? (
-            <span className="loading-spinner">Logging in...</span>
-          ) : (
-            'Log In'
-          )}
-        </button>
-        <p className="signup-link">
-          Don't have an account? <Link to="/signup">Sign Up</Link>
-        </p>
+        <button type="submit">Log In</button>
       </form>
+      <p>
+        Don’t have an account? <a href="/signup">Sign Up</a>
+      </p>
     </div>
   );
 };
