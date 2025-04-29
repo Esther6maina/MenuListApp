@@ -6,6 +6,7 @@
     "axios": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.12.0",
     "react-router-dom": "^6.3.0",
     "react-scripts": "^5.0.1"
   },
@@ -21,7 +22,7 @@
       "react-app/jest"
     ],
     "rules": {
-      "jsx-a11y/accessible-emoji": "off", 
+      "jsx-a11y/accessible-emoji": "off",
       "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off"
     }
@@ -37,5 +38,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.1",
+    "html-webpack-plugin": "^5.5.0",
+    "jest-environment-jsdom": "^27.5.1"
   }
 }
