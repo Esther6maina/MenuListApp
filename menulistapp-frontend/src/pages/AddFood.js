@@ -1,99 +1,67 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { FaTimes } from 'react-icons/fa'; // Correct import
+import './AddFood.css';
 
 const AddFood = () => {
-  const [description, setDescription] = useState('');
-  const [calories, setCalories] = useState('');
-  const [category, setCategory] = useState('Breakfast');
-  const [error, setError] = useState('');
+  const { state } = useLocation();
+  const { category, day } = state || {};
   const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [calories, setCalories] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!description.trim()) {
-      setError('Description cannot be empty.');
-      return;
-    }
-    const caloriesNum = parseInt(calories);
-    if (isNaN(caloriesNum) || caloriesNum <= 0 || caloriesNum > 5000) {
-      setError('Calories must be a positive number and less than 5000.');
-      return;
-    }
-
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Please log in to add a meal.');
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/data/${today}`, {
+      const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      const existingData = response.data;
-      const newMeal = {
-        category,
-        description,
-        calories: caloriesNum,
-        timestamp: new Date(),
-      };
-      const updatedMeals = [...existingData.meals, newMeal];
+      const existingMeals = response.data.meals || [];
+      const newMeal = { category, name, calories: parseInt(calories) };
+      const updatedMeals = [...existingMeals, newMeal];
 
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/data`,
-        {
-          meals: updatedMeals,
-          water: existingData.water,
-          activities: existingData.activities,
-          fasting: existingData.fasting,
-        },
+        'http://localhost:3000/api/data',
+        { meals: updatedMeals },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       navigate('/menulist');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to add meal');
+      console.error('Error adding meal:', err);
     }
   };
 
   return (
-    <div className="main-content">
-      <h2>Add Food</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit} className="add-meal-form">
-        <div>
-          <label>Description:</label>
+    <div className="add-food-container">
+      <h2>Add Meal to {category}</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Meal Name</label>
           <input
             type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
+            placeholder="e.g., Oatmeal"
           />
         </div>
-        <div>
-          <label>Calories (kcal):</label>
+        <div className="form-group">
+          <label>Calories (kcal)</label>
           <input
             type="number"
             value={calories}
             onChange={(e) => setCalories(e.target.value)}
             required
+            placeholder="e.g., 150"
           />
-        </div>
-        <div>
-          <label>Category:</label>
-          <select value={category}影响 onChange={(e) => setCategory(e.target.value)} required>
-            <option value="Breakfast">Breakfast</option>
-            <option value="Lunch">Lunch</option>
-            <option value="Dinner">Dinner</option>
-            <option value="Snack">Snack</option>
-          </select>
         </div>
         <button type="submit">Add Meal</button>
       </form>
+      <button onClick={() => navigate('/menulist')}>
+        <FaTimes /> Cancel
+      </button>
     </div>
   );
 };

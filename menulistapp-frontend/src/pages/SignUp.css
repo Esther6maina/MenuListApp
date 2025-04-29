@@ -1,0 +1,103 @@
+.signup-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 40px 20px; /* Increased vertical padding from 20px to 40px */
+  background-color: #2a4c44;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: white;
+  min-height: 450px; /* Slightly taller than Login due to extra field */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically */
+}
+
+.signup-container h2 {
+  text-align: center;
+  margin-bottom: 30px; /* Increased from 20px to 30px */
+  font-size: 1.8rem; /* Slightly larger font size */
+  font-weight: bold;
+}
+
+.signup-container .form-group {
+  margin-bottom: 20px; /* Increased from 15px to 20px */
+}
+
+.signup-container label {
+  font-size: 1.1rem; /* Slightly larger font size */
+  margin-bottom: 8px; /* Increased from 5px to 8px */
+  display: block;
+}
+
+.signup-container input {
+  width: 100%;
+  padding: 12px; /* Slightly increased padding */
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #333;
+}
+
+.signup-container .password-wrapper {
+  position: relative;
+}
+
+.signup-container .password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 1rem;
+  color: #28a745;
+}
+
+.signup-container .password-toggle:hover {
+  color: #218838;
+}
+
+.signup-container .error-message {
+  color: #ff4d4d;
+  text-align: center;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.signup-container .success-message {
+  color: #28a745;
+  text-align: center;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.signup-container button {
+  width: 100%;
+  padding: 12px; /* Slightly increased padding */
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.signup-container button:hover {
+  background-color: #218838;
+}
+
+.signup-container p {
+  text-align: center;
+  margin-top: 20px; /* Increased from 15px to 20px */
+  font-size: 0.9rem;
+}
+
+.signup-container a {
+  color: #00f;
+  text-decoration: none;
+}
+
+.signup-container a:hover {
+  text-decoration: underline;
+}

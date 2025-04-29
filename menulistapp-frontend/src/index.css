@@ -220,3 +220,15 @@ input, select {
 .add-meal-form button:hover {
   background-color: #1557b0;
 }
+
+/* src/index.css or src/App.css */
+body {
+  margin: 0;
+  background-color: #f5f7fa; /* Light background for consistency */
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1A3C34; /* Dark background for dark mode */
+  }
+}

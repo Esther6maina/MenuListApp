@@ -1,191 +1,80 @@
-// src/pages/MenuList.js
-import React, { useState, useEffect } from 'react';
-import './MenuList.css';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import './MenuList.css';
 
 const MenuList = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [meals, setMeals] = useState({
-    breakfast: [],
-    lunch: [],
-    dinner: [],
-    snacks: [],
-  });
-  const [newItem, setNewItem] = useState({ breakfast: '', lunch: '', dinner: '', snacks: '' });
-  const [editItem, setEditItem] = useState({ id: null, content: '', category: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [meals, setMeals] = useState({ Breakfast: [], Lunch: [], Dinner: [], Snacks: [] });
+  const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
+  const navigate = useNavigate();
 
-  // Fetch data for the selected date
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      setError('');
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          setError('Please log in to view your menu list.');
-          setLoading(false);
+          navigate('/login');
           return;
         }
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/food`, {
-          params: { date: selectedDate },
+        const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // Assuming the API returns data in the format: { breakfast: [], lunch: [], dinner: [], snacks: [] }
-        setMeals(response.data || { breakfast: [], lunch: [], dinner: [], snacks: [] });
+        setMeals({
+          Breakfast: response.data.meals.filter((meal) => meal.category === 'Breakfast'),
+          Lunch: response.data.meals.filter((meal) => meal.category === 'Lunch'),
+          Dinner: response.data.meals.filter((meal) => meal.category === 'Dinner'),
+          Snacks: response.data.meals.filter((meal) => meal.category === 'Snacks'),
+        });
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch menu data');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching data:', err);
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          localStorage.removeItem('token');
+          navigate('/login');
+        }
       }
     };
     fetchData();
-  }, [selectedDate]);
+  }, [day, navigate]);
 
-  // Add a new item to a category
-  const handleAddItem = async (category) => {
-    const content = newItem[category].trim();
-    if (!content) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/food`,
-        { date: selectedDate, category, content },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setMeals((prev) => ({
-        ...prev,
-        [category]: [...prev[category], response.data],
-      }));
-      setNewItem((prev) => ({ ...prev, [category]: '' }));
-    } catch (err) {
-      setError('Failed to add item');
-    }
+  const handleAddMeal = (category) => {
+    navigate('/add-food', { state: { category, day } });
   };
-
-  // Delete an item from a category
-  const handleDeleteItem = async (category, id) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/food/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setMeals((prev) => ({
-        ...prev,
-        [category]: prev[category].filter((item) => item.id !== id),
-      }));
-    } catch (err) {
-      setError('Failed to delete item');
-    }
-  };
-
-  // Start editing an item
-  const handleEditStart = (category, item) => {
-    setEditItem({ id: item.id, content: item.content, category });
-  };
-
-  // Save edited item
-  const handleEditSave = async () => {
-    const { id, content, category } = editItem;
-    if (!content.trim()) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/food/${id}`,
-        { content, date: selectedDate, category },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setMeals((prev) => ({
-        ...prev,
-        [category]: prev[category].map((item) =>
-          item.id === id ? { ...item, content } : item
-        ),
-      }));
-      setEditItem({ id: null, content: '', category: '' });
-    } catch (err) {
-      setError('Failed to update item');
-    }
-  };
-
-  // Render a section for each meal category
-  const renderSection = (category, title) => (
-    <div className={`${category}-section meal-section`}>
-      <h3>{title}</h3>
-      <div className="add-item-form">
-        <input
-          type="text"
-          placeholder={`Add a ${title} item...`}
-          value={newItem[category]}
-          onChange={(e) => setNewItem((prev) => ({ ...prev, [category]: e.target.value }))}
-          disabled={loading}
-        />
-        <button onClick={() => handleAddItem(category)} disabled={loading}>
-          <FaPlus /> Add
-        </button>
-      </div>
-      <ul className="meal-list">
-        {meals[category].length > 0 ? (
-          meals[category].map((item) => (
-            <li key={item.id} className="list-item">
-              {editItem.id === item.id ? (
-                <div className="edit-item-form">
-                  <input
-                    type="text"
-                    value={editItem.content}
-                    onChange={(e) => setEditItem((prev) => ({ ...prev, content: e.target.value }))}
-                  />
-                  <button onClick={handleEditSave}>Save</button>
-                  <button onClick={() => setEditItem({ id: null, content: '', category: '' })}>
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className="item-content">{item.content}</span>
-                  <div className="item-actions">
-                    <button onClick={() => handleEditStart(category, item)}>
-                      <FaEdit />
-                    </button>
-                    <button onClick={() => handleDeleteItem(category, item.id)}>
-                      <FaTrash />
-                    </button>
-                  </div>
-                </>
-              )}
-            </li>
-          ))
-        ) : (
-          <li className="no-data">No {title} items for this date.</li>
-        )}
-      </ul>
-    </div>
-  );
 
   return (
-    <div className="main-content">
-      <h1 className="page-title">Menu List</h1>
+    <div className="menu-list-container">
+      <h2>Menu List</h2>
       <div className="date-picker">
-        <label htmlFor="date-select">Select Date:</label>
+        <label htmlFor="day">Select Date: </label>
         <input
-          id="date-select"
           type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          disabled={loading}
+          id="day"
+          value={day}
+          onChange={(e) => setDay(e.target.value)}
         />
       </div>
-      {error && <p className="error-message">{error}</p>}
-      {loading && <div className="loading-spinner">Loading...</div>}
-      <div className="grid-container">
-        {renderSection('breakfast', 'Breakfast')}
-        {renderSection('lunch', 'Lunch')}
-        {renderSection('dinner', 'Dinner')}
-        {renderSection('snacks', 'Snacks')}
-      </div>
+      <h3>Meals for {day}</h3>
+      {Object.keys(meals).map((category) => (
+        <div key={category} className="category-section">
+          <h3>{category}</h3>
+          <ul>
+            {meals[category].length > 0 ? (
+              meals[category].map((meal, index) => (
+                <li key={index}>
+                  {meal.name} - {meal.calories} kcal
+                </li>
+              ))
+            ) : (
+              <p>No meals added.</p>
+            )}
+          </ul>
+          <div className="add-meal">
+            <button onClick={() => handleAddMeal(category)}>
+              <FaPlus /> Add Meal
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
