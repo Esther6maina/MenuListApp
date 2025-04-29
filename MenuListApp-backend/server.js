@@ -58,7 +58,7 @@ const authenticateToken = (req, res, next) => {
 
 // Routes
 
-// User Registration
+// User Registration (Existing endpoint)
 app.post('/api/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -106,6 +106,58 @@ app.post('/api/register', async (req, res) => {
     );
   } catch (error) {
     console.error('Error in /api/register:', error);
+    res.status(500).json({ error: 'User registration failed' });
+  }
+});
+
+// User Registration (New endpoint to match RESTful API structure)
+app.post('/api/users/register', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // Input validation
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Check if user already exists (by username or email)
+    db.get(
+      'SELECT * FROM users WHERE username = ? OR email = ?',
+      [username, email],
+      async (err, existingUser) => {
+        if (err) {
+          console.error('Error checking existing user:', err);
+          return res.status(500).json({ error: 'User registration failed' });
+        }
+
+        if (existingUser) {
+          return res.status(400).json({
+            error: existingUser.username === username ? 'Username already exists' : 'Email already exists',
+          });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        db.run(
+          'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+          [username, email, hashedPassword],
+          function (err) {
+            if (err) {
+              console.error('Error inserting user:', err);
+              return res.status(500).json({ error: 'User registration failed' });
+            }
+            res.status(201).json({ message: 'User registered successfully' });
+          }
+        );
+      }
+    );
+  } catch (error) {
+    console.error('Error in /api/users/register:', error);
     res.status(500).json({ error: 'User registration failed' });
   }
 });

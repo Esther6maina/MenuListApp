@@ -1,8 +1,0 @@
-node_modules/
-*.log
-.env
-dist/
-build/
-.DS_Store
-*.tmp
-food_tracker.db

@@ -29,3 +29,7 @@ Thumbs.db
 *.pid
 *.seed
 *.pid.lock
+
+# Database files
+database.json
+food_tracker.db
