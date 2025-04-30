@@ -1,13 +1,13 @@
 /* src/pages/MenuList.css */
 
 /* General container for the page */
-.main-content {
+.menu-list-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecef 100%); /* Subtle gradient background */
-  min-height: calc(100vh - 80px); /* Ensure full height minus header */
+  background: linear-gradient(135deg, #e6f0fa 0%, #f5f7fa 100%); /* Soft, modern gradient */
+  min-height: calc(100vh - 80px); /* Full height minus header */
   transition: background-color 0.3s ease;
 }
 
@@ -16,10 +16,19 @@
   font-size: 2.5rem;
   color: #1A3C34;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05); /* Subtle text shadow for depth */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Meals title */
+.meals-title {
+  font-size: 1.8rem;
+  color: #1A3C34;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 500;
 }
 
 /* Date picker styling */
@@ -34,11 +43,12 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .date-picker:hover {
   transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .date-picker label {
@@ -60,78 +70,43 @@
 }
 
 .date-picker input[type="date"]:hover {
-  border-color: #2E4A3F;
-  box-shadow: 0 0 5px rgba(46, 74, 63, 0.2);
+  border-color: #28a745;
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.2);
 }
 
 .date-picker input[type="date"]:focus {
-  border-color: #2E4A3F;
-  box-shadow: 0 0 8px rgba(46, 74, 63, 0.3);
-}
-
-.date-picker input[type="date"]:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  border-color: #28a745;
+  box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
 }
 
 /* Error message */
 .error-message {
-  color: #d32f2f;
+  color: #dc3545;
   text-align: center;
   margin-bottom: 20px;
   font-size: 1rem;
   font-weight: 500;
-  background: #fff;
+  background: #f8d7da;
   padding: 10px;
   border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #d32f2f; /* Add a left border for emphasis */
 }
 
-/* Loading Spinner */
-.loading-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  font-size: 1.2em;
-  color: #007bff;
-}
-
-.loading-spinner::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 3px solid #007bff;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 0.8s ease-in-out infinite;
-  margin-right: 12px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Grid layout for sections */
+/* Grid layout for meal sections */
 .grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
+  gap: 25px;
   margin-bottom: 40px;
 }
 
-/* Section styling (for meals) */
+/* Meal section styling */
 .meal-section {
-  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%); /* Subtle gradient for depth */
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   padding: 25px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #e5e5e5;
 }
 
 .meal-section:hover {
@@ -139,165 +114,28 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Section titles */
 .meal-section h3 {
   font-size: 1.6rem;
   color: #1A3C34;
   margin-bottom: 20px;
-  border-bottom: 2px solid #2E4A3F;
+  border-bottom: 2px solid #28a745;
   padding-bottom: 8px;
   font-weight: 600;
-  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .meal-section h3::before {
-  content: '🍽️'; /* Add a subtle emoji for visual appeal */
+  content: '🍽️';
   font-size: 1.2em;
 }
 
-.meal-section h3::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 50px;
-  height: 2px;
-  background: #28a745;
-  transition: width 0.3s ease;
-}
-
-.meal-section:hover h3::after {
-  width: 100px;
-}
-
-/* Add item form */
-.add-item-form {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.add-item-form input {
-  flex-grow: 1;
-  padding: 12px 15px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.add-item-form input:hover {
-  border-color: #2E4A3F;
-  transform: translateY(-2px);
-}
-
-.add-item-form input:focus {
-  border-color: #2E4A3F;
-  box-shadow: 0 0 8px rgba(46, 74, 63, 0.3);
-}
-
-.add-item-form input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Add item button with gradient */
-.add-item-form button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: linear-gradient(90deg, #28a745 0%, #34c759 100%);
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-.add-item-form button:hover {
-  background: linear-gradient(90deg, #218838 0%, #2db54f 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.add-item-form button:disabled {
-  background: #666;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Edit item form */
-.edit-item-form {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-}
-
-.edit-item-form input {
-  flex-grow: 1;
-  padding: 10px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  outline: none;
-  transition: border-color 0.3s ease, transform 0.2s ease;
-  box-sizing: border-box;
-}
-
-.edit-item-form input:hover {
-  border-color: #2E4A3F;
-  transform: translateY(-2px);
-}
-
-.edit-item-form input:focus {
-  border-color: #2E4A3F;
-  box-shadow: 0 0 8px rgba(46, 74, 63, 0.3);
-}
-
-.edit-item-form button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.edit-item-form button:first-of-type {
-  background: linear-gradient(90deg, #28a745 0%, #34c759 100%);
-  color: #fff;
-}
-
-.edit-item-form button:first-of-type:hover {
-  background: linear-gradient(90deg, #218838 0%, #2db54f 100%);
-  transform: translateY(-2px);
-}
-
-.edit-item-form button:last-of-type {
-  background: linear-gradient(90deg, #dc3545 0%, #e04b55 100%);
-  color: #fff;
-}
-
-.edit-item-form button:last-of-type:hover {
-  background: linear-gradient(90deg, #c82333 0%, #d43a44 100%);
-  transform: translateY(-2px);
-}
-
-/* List styling */
+/* Meal list styling */
 .meal-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 20px 0;
 }
 
 .list-item {
@@ -306,14 +144,14 @@
   align-items: center;
   padding: 12px 15px;
   border-bottom: 1px solid #eee;
-  background: #fff;
+  background: #fafafa;
   transition: background-color 0.3s ease, transform 0.2s ease;
   border-radius: 5px;
   margin-bottom: 5px;
 }
 
 .list-item:hover {
-  background-color: #f0f4f8;
+  background-color: #e6f0fa;
   transform: translateX(5px);
 }
 
@@ -338,22 +176,99 @@
   transition: color 0.3s ease, transform 0.2s ease;
 }
 
-.item-actions button:first-child {
+.edit-button {
   color: #007bff;
 }
 
-.item-actions button:first-child:hover {
+.edit-button:hover {
   color: #0056b3;
   transform: scale(1.2);
 }
 
-.item-actions button:last-child {
+.delete-button {
   color: #dc3545;
 }
 
-.item-actions button:last-child:hover {
+.delete-button:hover {
   color: #c82333;
   transform: scale(1.2);
+}
+
+/* Edit form styling */
+.edit-item-form {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.edit-item-form input {
+  flex-grow: 1;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.edit-item-form input:hover {
+  border-color: #28a745;
+}
+
+.edit-item-form input:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.2);
+}
+
+.edit-item-form button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.save-button {
+  background: #28a745;
+  color: #fff;
+}
+
+.save-button:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.cancel-button {
+  background: #dc3545;
+  color: #fff;
+}
+
+.cancel-button:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+/* Add meal button */
+.add-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.add-button:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 /* No data message */
@@ -363,40 +278,36 @@
   text-align: center;
   font-style: italic;
   padding: 15px;
-  background: #fafafa;
+  background: #f5f5f5;
   border-radius: 5px;
   border: 1px dashed #ddd;
 }
 
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
-  .main-content {
+  .menu-list-container {
     background: linear-gradient(135deg, #1A3C34 0%, #2E4A3F 100%);
   }
 
   .page-title,
+  .meals-title,
   .meal-section h3 {
     color: #e0e0e0;
   }
 
   .meal-section {
-    background: linear-gradient(145deg, #2E4A3F 0%, #3a5a4e 100%);
+    background: #2E4A3F;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border-color: #444;
   }
 
-  .meal-section h3::after {
-    background: #4cd964;
-  }
-
   .list-item {
-    border-bottom: 1px solid #444;
     background: #3a5a4e;
+    border-bottom: 1px solid #444;
   }
 
   .list-item:hover {
     background-color: #4a6a5e;
-    transform: translateX(5px);
   }
 
   .item-content {
@@ -424,42 +335,31 @@
     color: #e0e0e0;
   }
 
-  .date-picker input[type="date"]:hover {
-    border-color: #28a745;
-  }
-
+  .date-picker input[type="date"]:hover,
   .date-picker input[type="date"]:focus {
     border-color: #28a745;
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
   }
 
-  .error-message {
-    background: #2E4A3F;
-    border-left-color: #e04b55;
-  }
-
-  .add-item-form input,
   .edit-item-form input {
     background: #3a5a4e;
     border-color: #444;
     color: #e0e0e0;
   }
 
-  .add-item-form input:hover,
-  .edit-item-form input:hover {
+  .edit-item-form input:hover,
+  .edit-item-form input:focus {
     border-color: #28a745;
   }
 
-  .add-item-form input:focus,
-  .edit-item-form input:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+  .error-message {
+    background: #4a3a3e;
+    color: #f5c6cb;
   }
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .main-content {
+  .menu-list-container {
     padding: 20px 10px;
   }
 
@@ -467,20 +367,14 @@
     font-size: 2rem;
   }
 
+  .meals-title {
+    font-size: 1.5rem;
+  }
+
   .date-picker {
     flex-direction: column;
     gap: 10px;
     padding: 10px;
-  }
-
-  .date-picker label {
-    font-size: 1rem;
-  }
-
-  .date-picker input[type="date"] {
-    width: 100%;
-    font-size: 0.9rem;
-    padding: 8px 12px;
   }
 
   .grid-container {
@@ -496,31 +390,30 @@
     font-size: 1.4rem;
   }
 
-  .add-item-form {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .add-item-form input {
-    width: 100%;
-  }
-
-  .add-item-form button {
-    width: 100%;
-    justify-content: center;
-  }
-
   .list-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
     padding: 10px;
   }
+
+  .edit-item-form {
+    flex-direction: column;
+  }
+
+  .edit-item-form input,
+  .edit-item-form button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
   .page-title {
     font-size: 1.8rem;
+  }
+
+  .meals-title {
+    font-size: 1.3rem;
   }
 
   .date-picker input[type="date"] {
@@ -535,15 +428,6 @@
     font-size: 1.3rem;
   }
 
-  .add-item-form input {
-    font-size: 0.9rem;
-  }
-
-  .add-item-form button {
-    font-size: 0.9rem;
-    padding: 10px;
-  }
-
   .item-content {
     font-size: 0.9rem;
   }
@@ -551,4 +435,10 @@
   .item-actions button {
     font-size: 0.9rem;
   }
+
+  .edit-item-form input,
+  .edit-item-form button {
+    font-size: 0.8rem;
+  }
 }
+

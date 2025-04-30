@@ -1,22 +1,31 @@
+/* src/pages/AddFood.css */
+
 .add-food-container {
   max-width: 400px;
   margin: 50px auto;
-  padding: 40px 20px;
-  background-color: #2a4c44;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  color: white;
+  padding: 40px 30px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: #333;
   min-height: 400px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.add-food-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .add-food-container h2 {
   text-align: center;
   margin-bottom: 30px;
   font-size: 1.8rem;
-  font-weight: bold;
+  font-weight: 600;
+  color: #1A3C34;
 }
 
 .add-food-container .form-group {
@@ -27,23 +36,36 @@
   font-size: 1.1rem;
   margin-bottom: 8px;
   display: block;
+  color: #333;
+  font-weight: 500;
 }
 
 .add-food-container input {
   width: 100%;
   padding: 12px;
-  border: none;
+  border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 1rem;
-  background-color: #ffffff;
+  background-color: #fafafa;
   color: #333;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.add-food-container input:hover {
+  border-color: #28a745;
+}
+
+.add-food-container input:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.2);
+  outline: none;
 }
 
 .add-food-container button {
   width: 100%;
   padding: 12px;
-  background-color: #28a745;
-  color: white;
+  background: #28a745;
+  color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -54,20 +76,81 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
 .add-food-container button:hover {
-  background-color: #218838;
+  background: #218838;
+  transform: translateY(-2px);
 }
 
-.add-food-container button:last-child {
-  background-color: #ccc;
+.add-food-container .cancel-button {
+  background: #dc3545;
 }
 
-.add-food-container button:last-child:hover {
-  background-color: #bbb;
+.add-food-container .cancel-button:hover {
+  background: #c82333;
 }
 
 .add-food-container button svg {
   font-size: 1rem;
+}
+
+.error-message {
+  color: #dc3545;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: #f8d7da;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .add-food-container {
+    background: #2E4A3F;
+    color: #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .add-food-container h2,
+  .add-food-container label {
+    color: #e0e0e0;
+  }
+
+  .add-food-container input {
+    background-color: #3a5a4e;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .add-food-container input:hover,
+  .add-food-container input:focus {
+    border-color: #28a745;
+  }
+
+  .error-message {
+    background: #4a3a3e;
+    color: #f5c6cb;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .add-food-container {
+    margin: 20px 10px;
+    padding: 20px 15px;
+  }
+
+  .add-food-container h2 {
+    font-size: 1.5rem;
+  }
+
+  .add-food-container label,
+  .add-food-container input,
+  .add-food-container button {
+    font-size: 0.9rem;
+  }
 }
