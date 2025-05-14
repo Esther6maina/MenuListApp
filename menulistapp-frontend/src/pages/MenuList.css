@@ -1,232 +1,292 @@
-/* src/pages/MenuList.css */
-
-/* General container for the page */
 .menu-list-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #e6f0fa 0%, #f5f7fa 100%); /* Soft, modern gradient */
-  min-height: calc(100vh - 80px); /* Full height minus header */
-  transition: background-color 0.3s ease;
+  display: flex;
+  font-family: 'Inter', sans-serif;
+  background: #e6f0fa; /* Teal green background */
+  min-height: 100vh;
+  width: 100%;
 }
 
-/* Page title */
-.page-title {
-  font-size: 2.5rem;
-  color: #1A3C34;
-  text-align: center;
+.sidebar {
+  background: #1a3c34; /* Dark teal for sidebar */
+  padding: 20px 10px;
+  border-right: 1px solid #d1e7dd;
+  transition: width 0.3s ease;
+  min-height: 100vh;
+}
+
+.sidebar.open {
+  width: 200px;
+}
+
+.sidebar.closed {
+  width: 60px;
+}
+
+.toggle-sidebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
   margin-bottom: 20px;
+}
+
+.toggle-sidebar:hover {
+  background: #218838;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  margin: 5px 0;
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.sidebar.closed .sidebar-item {
+  justify-content: center;
+}
+
+.sidebar-item.active {
+  background: #28a745;
+}
+
+.sidebar-item:hover {
+  background: #2e7d32;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  width: 100%;
+}
+
+.title-section {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-size: 2rem;
+  color: #1a3c34;
   font-weight: 700;
-  letter-spacing: -0.5px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+  margin: 0;
 }
 
-/* Meals title */
-.meals-title {
-  font-size: 1.8rem;
-  color: #1A3C34;
-  text-align: center;
-  margin-bottom: 30px;
-  font-weight: 500;
+.menu-title {
+  font-size: 1.5rem;
+  color: #1a3c34;
+  margin-bottom: 20px;
+  font-weight: 600;
 }
 
-/* Date picker styling */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
 .date-picker {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 40px;
-  background: #fff;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0e0e0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.date-picker:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  gap: 10px;
 }
 
 .date-picker label {
-  font-size: 1.1rem;
-  color: #333;
+  font-size: 1rem;
+  color: #1a3c34;
   font-weight: 500;
 }
 
 .date-picker input[type="date"] {
-  padding: 10px 15px;
-  font-size: 1rem;
+  padding: 8px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background-color: #fff;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.date-picker input[type="date"]:hover {
-  border-color: #28a745;
-  box-shadow: 0 0 5px rgba(40, 167, 69, 0.2);
-}
-
-.date-picker input[type="date"]:focus {
-  border-color: #28a745;
-  box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
-}
-
-/* Error message */
-.error-message {
-  color: #dc3545;
-  text-align: center;
-  margin-bottom: 20px;
   font-size: 1rem;
-  font-weight: 500;
-  background: #f8d7da;
-  padding: 10px;
-  border-radius: 5px;
 }
 
-/* Grid layout for meal sections */
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
+.right-boxes {
+  display: flex;
+  gap: 15px;
 }
 
-/* Meal section styling */
-.meal-section {
+.search-box {
+  display: flex;
+  align-items: center;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 25px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid #e5e5e5;
-}
-
-.meal-section:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.meal-section h3 {
-  font-size: 1.6rem;
-  color: #1A3C34;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #28a745;
-  padding-bottom: 8px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.meal-section h3::before {
-  content: '🍽️';
-  font-size: 1.2em;
-}
-
-/* Meal list styling */
-.meal-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px 0;
-}
-
-.list-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
-  background: #fafafa;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  padding: 8px;
   border-radius: 5px;
-  margin-bottom: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.list-item:hover {
-  background-color: #e6f0fa;
-  transform: translateX(5px);
+.search-box input {
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  flex: 1;
 }
 
-/* Item content and actions */
-.item-content {
-  font-size: 1rem;
-  color: #333;
-  font-weight: 500;
-  flex-grow: 1;
-}
-
-.item-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.item-actions button {
+.search-box button {
   background: none;
   border: none;
+  color: #28a745;
   font-size: 1rem;
   cursor: pointer;
-  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.day-filter-box {
+  background: #fff;
+  padding: 8px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.day-filter-box label {
+  font-size: 0.9rem;
+  color: #1a3c34;
+  margin-right: 10px;
+}
+
+.day-filter-box select {
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+.meals-title {
+  font-size: 1.2rem;
+  color: #1a3c34;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+.meal-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.meal-table th,
+.meal-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.meal-table th {
+  background: #f8f9fa;
+  color: #1a3c34;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.meal-table td {
+  color: #1a3c34;
+}
+
+.meal-table tr:last-child td {
+  border-bottom: none;
+}
+
+.add-button,
+.edit-button,
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.add-button:hover {
+  background: #218838;
 }
 
 .edit-button {
-  color: #007bff;
+  background: #007bff;
 }
 
 .edit-button:hover {
-  color: #0056b3;
-  transform: scale(1.2);
+  background: #0056b3;
 }
 
 .delete-button {
-  color: #dc3545;
+  background: #dc3545;
 }
 
 .delete-button:hover {
-  color: #c82333;
-  transform: scale(1.2);
+  background: #c82333;
 }
 
-/* Edit form styling */
+button:disabled {
+  background: #ccc !important;
+  cursor: not-allowed;
+}
+
+.add-item-form,
 .edit-item-form {
   display: flex;
   gap: 10px;
+  padding: 5px 0;
+  align-items: center;
   width: 100%;
 }
 
+.add-item-form input,
 .edit-item-form input {
-  flex-grow: 1;
-  padding: 8px 10px;
-  font-size: 0.9rem;
+  padding: 8px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-size: 0.9rem;
+  flex: 1;
 }
 
-.edit-item-form input:hover {
-  border-color: #28a745;
+.add-item-form .calories-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.edit-item-form input:focus {
-  border-color: #28a745;
-  box-shadow: 0 0 5px rgba(40, 167, 69, 0.2);
+.add-item-form .calories-input label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
 }
 
+.add-item-form button,
 .edit-item-form button {
   padding: 8px 12px;
   border: none;
   border-radius: 5px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .save-button {
@@ -236,7 +296,6 @@
 
 .save-button:hover {
   background: #218838;
-  transform: translateY(-2px);
 }
 
 .cancel-button {
@@ -246,199 +305,90 @@
 
 .cancel-button:hover {
   background: #c82333;
-  transform: translateY(-2px);
 }
 
-/* Add meal button */
-.add-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background: #28a745;
-  color: #fff;
-  border: none;
+.error-message {
+  color: #dc3545;
+  background: #f8d7da;
+  padding: 10px;
   border-radius: 5px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-.add-button:hover {
-  background: #218838;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-/* No data message */
-.no-data {
-  font-size: 1rem;
-  color: #777;
+  margin-bottom: 20px;
   text-align: center;
-  font-style: italic;
-  padding: 15px;
-  background: #f5f5f5;
-  border-radius: 5px;
-  border: 1px dashed #ddd;
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .menu-list-container {
-    background: linear-gradient(135deg, #1A3C34 0%, #2E4A3F 100%);
-  }
-
-  .page-title,
-  .meals-title,
-  .meal-section h3 {
-    color: #e0e0e0;
-  }
-
-  .meal-section {
-    background: #2E4A3F;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border-color: #444;
-  }
-
-  .list-item {
-    background: #3a5a4e;
-    border-bottom: 1px solid #444;
-  }
-
-  .list-item:hover {
-    background-color: #4a6a5e;
-  }
-
-  .item-content {
-    color: #e0e0e0;
-  }
-
-  .no-data {
-    color: #b0b0b0;
-    background: #2a3f36;
-    border-color: #555;
-  }
-
-  .date-picker {
-    background: #2E4A3F;
-    border-color: #444;
-  }
-
-  .date-picker label {
-    color: #e0e0e0;
-  }
-
-  .date-picker input[type="date"] {
-    background-color: #3a5a4e;
-    border-color: #444;
-    color: #e0e0e0;
-  }
-
-  .date-picker input[type="date"]:hover,
-  .date-picker input[type="date"]:focus {
-    border-color: #28a745;
-  }
-
-  .edit-item-form input {
-    background: #3a5a4e;
-    border-color: #444;
-    color: #e0e0e0;
-  }
-
-  .edit-item-form input:hover,
-  .edit-item-form input:focus {
-    border-color: #28a745;
-  }
-
-  .error-message {
-    background: #4a3a3e;
-    color: #f5c6cb;
-  }
-}
-
-/* Responsive design */
+/* Responsive Design */
 @media (max-width: 768px) {
   .menu-list-container {
-    padding: 20px 10px;
-  }
-
-  .page-title {
-    font-size: 2rem;
-  }
-
-  .meals-title {
-    font-size: 1.5rem;
-  }
-
-  .date-picker {
     flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    border-right: none;
+    border-bottom: 1px solid #d1e7dd;
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     padding: 10px;
   }
 
-  .grid-container {
-    grid-template-columns: 1fr;
-    gap: 20px;
+  .sidebar.closed {
+    width: 100% !important;
   }
 
-  .meal-section {
-    padding: 20px;
+  .main-content {
+    padding: 15px;
   }
 
-  .meal-section h3 {
-    font-size: 1.4rem;
-  }
-
-  .list-item {
+  .controls {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 10px;
+    gap: 10px;
   }
 
+  .right-boxes {
+    width: 100%;
+  }
+
+  .search-box,
+  .day-filter-box {
+    width: 100%;
+  }
+
+  .meal-table {
+    font-size: 0.8rem;
+  }
+
+  .meal-table th,
+  .meal-table td {
+    padding: 8px 10px;
+  }
+
+  .add-item-form,
   .edit-item-form {
     flex-direction: column;
   }
 
-  .edit-item-form input,
-  .edit-item-form button {
+  .add-item-form input,
+  .edit-item-form input {
     width: 100%;
   }
 }
 
 @media (max-width: 480px) {
   .page-title {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+  }
+
+  .menu-title {
+    font-size: 1.2rem;
   }
 
   .meals-title {
-    font-size: 1.3rem;
+    font-size: 1rem;
   }
 
-  .date-picker input[type="date"] {
-    font-size: 0.8rem;
-  }
-
-  .meal-section {
-    padding: 15px;
-  }
-
-  .meal-section h3 {
-    font-size: 1.3rem;
-  }
-
-  .item-content {
-    font-size: 0.9rem;
-  }
-
-  .item-actions button {
-    font-size: 0.9rem;
-  }
-
-  .edit-item-form input,
-  .edit-item-form button {
-    font-size: 0.8rem;
+  .meal-table th,
+  .meal-table td {
+    padding: 6px 8px;
   }
 }
-
