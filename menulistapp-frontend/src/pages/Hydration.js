@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import './Hydration.css';
 
 const Hydration = () => {
   const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
@@ -15,7 +16,7 @@ const Hydration = () => {
         return;
       }
 
-      const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
+      const response = await axios.get(`/api/data/${day}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setWater(response.data.water || []);
@@ -49,11 +50,13 @@ const Hydration = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAmount('');
-      fetchData(); // This should now work correctly
+      fetchData();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add water intake');
     }
   };
+
+  const totalWater = water.reduce((sum, entry) => sum + entry.amount, 0);
 
   return (
     <div className="main-content">
@@ -76,6 +79,9 @@ const Hydration = () => {
             </li>
           ))}
         </ul>
+        <div className="totals">
+          Total Water Intake: {totalWater} ml
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="add-water-form">

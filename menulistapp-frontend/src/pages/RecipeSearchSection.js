@@ -1,6 +1,6 @@
-// src/pages/RecipeSearchSection.js
 import React, { useState } from 'react';
 import axios from 'axios';
+import { FaSearch } from 'react-icons/fa';
 
 const RecipeSearchSection = React.memo(() => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -10,6 +10,10 @@ const RecipeSearchSection = React.memo(() => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
+    if (!searchQuery.trim()) {
+      setError('Please enter a search term.');
+      return;
+    }
     setLoading(true);
     setError('');
     setRecipes([]);
@@ -20,14 +24,21 @@ const RecipeSearchSection = React.memo(() => {
         setLoading(false);
         return;
       }
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/spoonacular/search`, {
+      const response = await axios.get('/api/spoonacular/search', {
         params: { query: searchQuery },
         headers: { Authorization: `Bearer ${token}` },
       });
-      setRecipes(response.data || []);
-      setError('');
+      const fetchedRecipes = response.data.results || [];
+      setRecipes(fetchedRecipes);
+      if (fetchedRecipes.length === 0) {
+        setError('No recipes found. Try a different search term!');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch recipes');
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+      setError(err.response?.data?.error || 'Failed to fetch recipes. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -36,15 +47,20 @@ const RecipeSearchSection = React.memo(() => {
   return (
     <section className="recipe-search-section">
       <h2>Search for Recipes</h2>
+      <p className="recipe-search-description">
+        Find healthy recipes to match your dietary needs.
+      </p>
       <form onSubmit={handleSearch} className="recipe-search-form">
+        <FaSearch />
         <input
           type="text"
           placeholder="Search for recipes (e.g., chicken salad)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           disabled={loading}
+          aria-label="Search for recipes"
         />
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} aria-label="Search recipes">
           {loading ? 'Searching...' : 'Search'}
         </button>
       </form>
@@ -55,6 +71,8 @@ const RecipeSearchSection = React.memo(() => {
           recipes.map((recipe) => (
             <div key={recipe.id} className="recipe-card">
               <h3>{recipe.title}</h3>
+              <p>Calories: Not available (mock data)</p>
+              {/* Uncomment when using real Spoonacular API
               {recipe.nutrition?.nutrients?.find(n => n.name === 'Calories') ? (
                 <p>
                   Calories: {recipe.nutrition.nutrients.find(n => n.name === 'Calories').amount}{' '}
@@ -63,10 +81,11 @@ const RecipeSearchSection = React.memo(() => {
               ) : (
                 <p>Calories: Not available</p>
               )}
+              */}
             </div>
           ))
         ) : (
-          !loading && <p className="no-results">No recipes found. Try a different search term!</p>
+          !loading && !error && <p className="no-results">Search for a recipe to get started!</p>
         )}
       </div>
     </section>

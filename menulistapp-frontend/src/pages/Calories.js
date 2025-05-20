@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
+import './Calories.css';
 
 const Calories = () => {
-  const [day, setDay] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
   const [meals, setMeals] = useState([]);
   const [error, setError] = useState('');
 
@@ -15,9 +16,9 @@ const Calories = () => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
+        const response = await axios.get(`/api/data/${day}`, {
           headers: { Authorization: `Bearer ${token}` },
-        });
+          });
         setMeals(response.data.meals || []);
         setError('');
       } catch (err) {

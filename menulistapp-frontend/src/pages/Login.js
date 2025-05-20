@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Login.css';
 
 const Login = () => {
@@ -10,16 +12,23 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
     try {
-      const response = await axios.post('http://localhost:3000/api/login', {
-        username: email,
-        email: email,
-        password: password,
+      const response = await axios.post('/api/login', {
+        email,
+        password,
       });
       localStorage.setItem('token', response.data.token);
       window.location.href = '/menulist';
     } catch (err) {
-      setError('Failed to log in. Please try again.');
+      setError(
+        err.response?.status === 400
+          ? 'Invalid email or password.'
+          : 'Failed to log in. Please try again later.'
+      );
       console.error('Login error:', err.response ? err.response.data : err.message);
     }
   };
@@ -29,29 +38,34 @@ const Login = () => {
       <h2>Log In to Food Tracker</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Email</label>
+          <label htmlFor="email">Email</label>
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="testuser@example.com"
+            aria-label="Enter your email"
           />
         </div>
         <div className="form-group">
-          <label>Password</label>
+          <label htmlFor="password">Password</label>
           <div className="password-wrapper">
             <input
+              id="password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              aria-label="Enter your password"
             />
             <span
               className="password-toggle"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {showPassword ? '👁️' : '👁️‍🗨️'}
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
         </div>
@@ -59,7 +73,7 @@ const Login = () => {
         <button type="submit">Log In</button>
       </form>
       <p>
-        Don’t have an account? <a href="/signup">Sign Up</a>
+        Don’t have an account? <Link to="/signup">Sign Up</Link>
       </p>
     </div>
   );

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import './Fitness.css';
 
 const Fitness = () => {
   const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
@@ -16,7 +17,7 @@ const Fitness = () => {
         return;
       }
 
-      const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
+      const response = await axios.get(`/api/data/${day}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setActivities(response.data.activities || []);
@@ -57,6 +58,8 @@ const Fitness = () => {
     }
   };
 
+  const totalDuration = activities.reduce((sum, activity) => sum + activity.duration, 0);
+
   return (
     <div className="main-content">
       <h2>Fitness</h2>
@@ -78,6 +81,9 @@ const Fitness = () => {
             </li>
           ))}
         </ul>
+        <div className="totals">
+          Total Activity Duration: {totalDuration} minutes
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="add-activity-form">

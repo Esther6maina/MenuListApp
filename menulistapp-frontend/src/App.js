@@ -1,68 +1,67 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from './pages/Home';
-import MenuList from './pages/MenuList';
-import Hydration from './pages/Hydration';
-import Fitness from './pages/Fitness';
-import Calories from './pages/Calories';
-import Fasting from './pages/Fasting';
-import SignUp from './pages/SignUp';
-import Login from './pages/Login';
-import './App.css';
+     import Home from './pages/Home';
+     import MenuList from './pages/MenuList';
+     import Hydration from './pages/Hydration';
+     import Fitness from './pages/Fitness';
+     import Calories from './pages/Calories';
+     import Fasting from './pages/Fasting';
+     import Login from './pages/Login';
+     import SignUp from './pages/SignUp';
+     import './App.css';
 
-// Component to protect routes
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
-};
+     const ProtectedRoute = ({ children }) => {
+       const token = localStorage.getItem('token');
+       return token ? children : <Navigate to="/login" />;
+     };
 
-function App() {
-  return (
-    <Routes>
-      <Route exact path="/" element={<Home />} />
-      <Route
-        path="/menulist"
-        element={
-          <ProtectedRoute>
-            <MenuList />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hydration"
-        element={
-          <ProtectedRoute>
-            <Hydration />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/fitness"
-        element={
-          <ProtectedRoute>
-            <Fitness />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/calories"
-        element={
-          <ProtectedRoute>
-            <Calories />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/fasting"
-        element={
-          <ProtectedRoute>
-            <Fasting />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/login" element={<Login />} />
-    </Routes>
-  );
-}
+     function App() {
+       return (
+         <Routes>
+           <Route exact path="/" element={<Home />} />
+           <Route
+             path="/menulist"
+             element={
+               <ProtectedRoute>
+                 <MenuList />
+               </ProtectedRoute>
+             }
+           />
+           <Route
+             path="/hydration"
+             element={
+               <ProtectedRoute>
+                 <Hydration />
+               </ProtectedRoute>
+             }
+           />
+           <Route
+             path="/fitness"
+             element={
+               <ProtectedRoute>
+                 <Fitness />
+               </ProtectedRoute>
+             }
+           />
+           <Route
+             path="/calories"
+             element={
+               <ProtectedRoute>
+                 <Calories />
+               </ProtectedRoute>
+             }
+           />
+           <Route
+             path="/fasting"
+             element={
+               <ProtectedRoute>
+                 <Fasting />
+               </ProtectedRoute>
+             }
+           />
+           <Route path="/signup" element={<SignUp />} />
+           <Route path="/login" element={<Login />} />
+         </Routes>
+       );
+     }
 
-export default App;
+     export default App;

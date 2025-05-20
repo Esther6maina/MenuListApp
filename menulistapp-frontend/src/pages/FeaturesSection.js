@@ -1,76 +1,61 @@
-// src/pages/FeaturesSection.js
 import React from 'react';
-import menuListImage from '../assets/menulist.jpg';
-import hydrationImage from '../assets/hydration.jpg';
-import fitnessImage from '../assets/fitness.jpg';
-import caloriesImage from '../assets/calories.jpg';
-import fastingImage from '../assets/fasting.jpg';
+import { Link } from 'react-router-dom';
+import { FaUtensils, FaTint, FaRunning, FaFire, FaClock } from 'react-icons/fa';
 
 const FeaturesSection = React.memo(() => {
+  const features = [
+    {
+      title: 'Menu List',
+      description: 'Track your daily meals and plan your nutrition effortlessly.',
+      icon: <FaUtensils />,
+      link: '/menulist',
+    },
+    {
+      title: 'Hydration',
+      description: 'Monitor your water intake to stay hydrated and healthy.',
+      icon: <FaTint />,
+      link: '/hydration',
+    },
+    {
+      title: 'Fitness',
+      description: 'Log your workouts and achieve your fitness goals.',
+      icon: <FaRunning />,
+      link: '/fitness',
+    },
+    {
+      title: 'Calories',
+      description: 'Keep track of your calorie intake for a balanced diet.',
+      icon: <FaFire />,
+      link: '/calories',
+    },
+    {
+      title: 'Fasting',
+      description: 'Manage your fasting schedule for better health.',
+      icon: <FaClock />,
+      link: '/fasting',
+    },
+  ];
+
   return (
     <section className="features-section">
+      <span className="section-badge">Features</span>
       <h2>Explore Our Features</h2>
+      <p className="features-subtitle">
+        Discover tools to help you live a healthier lifestyle.
+      </p>
       <div className="features-grid">
-        <div className="feature-card">
-          <div className="feature-image-container">
-            <img
-              src={menuListImage}
-              alt="Menu List"
-              loading="lazy"
-              onError={(e) => (e.target.src = 'https://via.placeholder.com/300?text=Menu+List')}
-            />
-          </div>
-          <h3>Menu List</h3>
-          <p>Track your daily meals and plan your nutrition effortlessly.</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-image-container">
-            <img
-              src={hydrationImage}
-              alt="Hydration"
-              loading="lazy"
-              onError={(e) => (e.target.src = 'https://via.placeholder.com/300?text=Hydration')}
-            />
-          </div>
-          <h3>Hydration</h3>
-          <p>Monitor your water intake to stay hydrated and healthy.</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-image-container">
-            <img
-              src={fitnessImage}
-              alt="Fitness"
-              loading="lazy"
-              onError={(e) => (e.target.src = 'https://via.placeholder.com/300?text=Fitness')}
-            />
-          </div>
-          <h3>Fitness</h3>
-          <p>Log your workouts and achieve your fitness goals.</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-image-container">
-            <img
-              src={caloriesImage}
-              alt="Calories"
-              loading="lazy"
-              onError={(e) => (e.target.src = 'https://via.placeholder.com/300?text=Calories')}
-            />
-          </div>
-          <h3>Calories</h3>
-          <p>Keep track of your calorie intake for a balanced diet.</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-image-container">
-            <img
-              src={fastingImage}
-              alt="Fasting"
-              loading="lazy"
-              onError={(e) => (e.target.src = 'https://via.placeholder.com/300?text=Fasting')}
-            />
-          </div>
-          <h3>Fasting</h3>
-          <p>Manage your fasting schedule for better health.</p>
-        </div>
+        {features.map((feature) => (
+          <Link
+            key={feature.title}
+            to={feature.link}
+            className="feature-card"
+            aria-label={`Go to ${feature.title} page`}
+          >
+            <div className="feature-icon">{feature.icon}</div>
+            <h3>{feature.title}</h3>
+            <p>{feature.description}</p>
+          </Link>
+        ))}
       </div>
     </section>
   );

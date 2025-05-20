@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import './Fasting.css';
 
 const Fasting = () => {
   const [day, setDay] = useState(new Date().toISOString().split('T')[0]);
@@ -16,7 +17,7 @@ const Fasting = () => {
         return;
       }
 
-      const response = await axios.get(`http://localhost:3000/api/data/${day}`, {
+      const response = await axios.get(`/api/data/${day}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFasting(response.data.fasting || []);
@@ -24,11 +25,11 @@ const Fasting = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch fasting data');
     }
-  }, [day]); // `day` is a dependency of `fetchData`
+  }, [day]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Add `fetchData` to the dependency array
+  }, [fetchData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
