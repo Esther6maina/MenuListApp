@@ -1,0 +1,120 @@
+.features-section {
+  padding: 60px 20px;
+  background-color: #f5f7fa;
+  text-align: center;
+}
+
+.features-section h2 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  color: #333;
+}
+
+.features-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  margin: 0;
+}
+
+.feature-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 15px;
+  overflow: hidden;
+  width: 100%;
+  height: 250px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.image-left .feature-image {
+  order: 1;
+  border-top-left-radius: 15px;
+  border-bottom-left-radius: 15px;
+}
+
+.image-left .feature-content {
+  order: 2;
+}
+
+.image-right .feature-image {
+  order: 2;
+  border-top-right-radius: 15px;
+  border-bottom-right-radius: 15px;
+}
+
+.image-right .feature-content {
+  order: 1;
+}
+
+.feature-image {
+  width: 250px;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feature-content {
+  flex: 1;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start; /* Align content to the left */
+  text-align: left;
+}
+
+.feature-content h3 {
+  font-size: 1.8rem;
+  font-weight: 600; /* Match the bold title in the first image */
+  margin-bottom: 10px;
+  color: #28a745;
+}
+
+.feature-content p {
+  font-size: 1.1rem;
+  line-height: 1.5; /* Match the line spacing in the first image */
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.feature-button {
+  display: inline-block;
+  padding: 10px 20px; /* Match the button size in the first image */
+  background-color: #28a745;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.feature-button:hover {
+  background-color: #218838;
+}
+
+@media (max-width: 768px) {
+  .feature-card {
+    flex-direction: column;
+    height: auto;
+    text-align: center;
+  }
+  .feature-image {
+    width: 100%;
+    height: 250px;
+    border-radius: 15px 15px 0 0;
+    order: 1 !important;
+  }
+  .feature-content {
+    order: 2 !important;
+    padding: 20px;
+    align-items: center; /* Center align on mobile */
+  }
+}

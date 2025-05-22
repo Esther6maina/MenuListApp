@@ -9,7 +9,7 @@ const RecipeSearchSection = React.lazy(() => import('./RecipeSearchSection'));
 
 const Home = () => {
   return (
-    <div>
+    <div style={{ paddingTop: '60px' }}> {/* Adjust for fixed header */}
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-overlay"></div>

@@ -1,60 +1,72 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaUtensils, FaTint, FaRunning, FaFire, FaClock } from 'react-icons/fa';
+import menulistImage from '../assets/menulist.jpg';
+import hydrationImage from '../assets/hydration.jpg';
+import fitnessImage from '../assets/fitness.jpg';
+import caloriesImage from '../assets/calories.jpg';
+import fastingImage from '../assets/fasting.jpg';
+import './FeaturesSection.css';
 
 const FeaturesSection = React.memo(() => {
   const features = [
     {
-      title: 'Menu List',
-      description: 'Track your daily meals and plan your nutrition effortlessly.',
-      icon: <FaUtensils />,
+      title: 'MenuList',
+      description: 'Track your meals easily with our app',
       link: '/menulist',
+      image: menulistImage,
+      imagePosition: 'left',
     },
     {
       title: 'Hydration',
-      description: 'Monitor your water intake to stay hydrated and healthy.',
-      icon: <FaTint />,
+      description: 'Monitor your water intake daily',
       link: '/hydration',
+      image: hydrationImage,
+      imagePosition: 'right',
     },
     {
       title: 'Fitness',
-      description: 'Log your workouts and achieve your fitness goals.',
-      icon: <FaRunning />,
+      description: 'Log your workouts effortlessly',
       link: '/fitness',
+      image: fitnessImage,
+      imagePosition: 'left',
     },
     {
       title: 'Calories',
-      description: 'Keep track of your calorie intake for a balanced diet.',
-      icon: <FaFire />,
+      description: 'Count your calories accurately',
       link: '/calories',
+      image: caloriesImage,
+      imagePosition: 'right',
     },
     {
       title: 'Fasting',
-      description: 'Manage your fasting schedule for better health.',
-      icon: <FaClock />,
+      description: 'Manage your fasting schedule',
       link: '/fasting',
+      image: fastingImage,
+      imagePosition: 'left',
     },
   ];
 
   return (
     <section className="features-section">
-      <span className="section-badge">Features</span>
-      <h2>Explore Our Features</h2>
-      <p className="features-subtitle">
-        Discover tools to help you live a healthier lifestyle.
-      </p>
+      <h2>Choose Your Focus</h2>
       <div className="features-grid">
         {features.map((feature) => (
-          <Link
+          <div
             key={feature.title}
-            to={feature.link}
-            className="feature-card"
-            aria-label={`Go to ${feature.title} page`}
+            className={`feature-card ${feature.imagePosition === 'right' ? 'image-right' : 'image-left'}`}
           >
-            <div className="feature-icon">{feature.icon}</div>
-            <h3>{feature.title}</h3>
-            <p>{feature.description}</p>
-          </Link>
+            <img
+              src={feature.image}
+              alt={feature.title}
+              className="feature-image"
+              onError={(e) => (e.target.src = 'https://via.placeholder.com/150?text=' + feature.title)}
+            />
+            <div className="feature-content">
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+              <Link to={feature.link} className="feature-button">Get Started</Link>
+            </div>
+          </div>
         ))}
       </div>
     </section>
